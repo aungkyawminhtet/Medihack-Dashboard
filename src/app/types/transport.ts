@@ -1,17 +1,27 @@
 // Transport Equipment Types
-export type EquipmentType = 'stretcher' | 'wheelchair';
+export type EquipmentType = "stretcher" | "wheelchair";
 
-export type EquipmentStatus = 'available' | 'in-use' | 'requested' | 'maintenance';
+export type EquipmentStatus =
+  | "available"
+  | "in-use"
+  | "requested"
+  | "maintenance";
 
-export type RequestPriority = 'routine' | 'urgent' | 'emergency';
+export type RequestPriority = "routine" | "urgent" | "emergency";
 
-export type RequestStatus = 'pending' | 'assigned' | 'in-progress' | 'completed' | 'cancelled';
+export type RequestStatus =
+  | "pending"
+  | "assigned"
+  | "in-progress"
+  | "completed"
+  | "cancelled";
 
 // Transport Equipment
 export interface TransportEquipment {
   id: string;
   type: EquipmentType;
   name: string;
+  model?: string;
   status: EquipmentStatus;
   location: {
     x: number; // SVG coordinates
@@ -21,6 +31,8 @@ export interface TransportEquipment {
   };
   batteryLevel?: number; // For powered equipment
   lastMaintenance: Date;
+  lastUsed?: string;
+  maintenanceNote?: string;
   assignedStaff?: string; // Staff ID
   currentRequest?: string; // Request ID
 }
@@ -30,7 +42,7 @@ export interface StaffMember {
   id: string;
   name: string;
   role: string;
-  status: 'available' | 'busy' | 'off-duty';
+  status: "available" | "busy" | "off-duty";
   location: {
     x: number;
     y: number;

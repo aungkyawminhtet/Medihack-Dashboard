@@ -13,8 +13,8 @@ import {
 import { AccessPoint } from "../types/access-point";
 import { FloorConfig } from "../types/floor-config";
 import {
-  transportEquipmentData,
-  transportStaffData,
+  equipmentData,
+  staffData,
   transportRequestsData,
   accessPointsData,
   DEFAULT_FLOOR_CONFIG,
@@ -56,10 +56,27 @@ interface AppContextType {
   setSelectedAccessPoint: React.Dispatch<
     React.SetStateAction<AccessPoint | null>
   >;
-  handleAssignRequest: (requestId: string) => void;
+  handleAssignRequest: (
+    requestId: string,
+    staffId: string,
+    equipmentId: string,
+  ) => void;
   handleCancelRequest: (requestId: string) => void;
   handleNewRequest: (requestData: Partial<TransportRequest>) => void;
   handleAddEquipment: (equipmentData: Partial<TransportEquipment>) => void;
+  handleUpdateEquipment: (
+    equipmentId: string,
+    updates: Partial<TransportEquipment>,
+  ) => void;
+  handleDeleteEquipment: (equipmentId: string) => void;
+  handleAssignEquipmentLocation: (
+    equipmentId: string,
+    floor: number,
+    zone: string,
+  ) => void;
+  handleAddStaff: (staffData: Partial<StaffMember>) => void;
+  handleUpdateStaff: (staffId: string, updates: Partial<StaffMember>) => void;
+  handleDeleteStaff: (staffId: string) => void;
   handleAddAccessPoint: (accessPointData: Partial<AccessPoint>) => void;
   handleFloorConfigUpdate: (newConfig: FloorConfig[]) => void;
 }
@@ -73,10 +90,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
-  const [equipment, setEquipment] = useState<TransportEquipment[]>(
-    transportEquipmentData,
-  );
-  const [staff, setStaff] = useState<StaffMember[]>(transportStaffData);
+  const [equipment, setEquipment] =
+    useState<TransportEquipment[]>(equipmentData);
+  const [staff, setStaff] = useState<StaffMember[]>(staffData);
   const [requests, setRequests] = useState<TransportRequest[]>(
     transportRequestsData,
   );
@@ -94,7 +110,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Simulate real-time updates
   useEffect(() => {
     const interval = setInterval(() => {
- 
       setEquipment((prevEquipment) =>
         prevEquipment.map((eq) => {
           if (eq.status === "in-use" || eq.status === "requested") {
@@ -139,25 +154,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, []);
 
-  const handleAssignRequest = (requestId: string) => {
+  const handleAssignRequest = (
+    requestId: string,
+    staffId: string,
+    equipmentId: string,
+  ) => {
     const request = requests.find((r) => r.id === requestId);
-    if (!request) return;
+    const selectedStaff = staff.find((s) => s.id === staffId);
+    const selectedEquipment = equipment.find((eq) => eq.id === equipmentId);
 
-    const availableStaff = staff
-      .filter((s) => s.status === "available")
-      .sort((a, b) => a.currentWorkload - b.currentWorkload)[0];
-
-    const availableEquipment = equipment.find(
-      (eq) => eq.type === request.equipmentType && eq.status === "available",
-    );
-
-    if (!availableStaff) {
-      toast.error("No available staff to assign");
+    if (!request || !selectedStaff || !selectedEquipment) {
+      toast.error("Invalid assignment: request, staff, or equipment not found");
       return;
     }
 
-    if (!availableEquipment) {
-      toast.error(`No available ${request.equipmentType} to assign`);
+    if (selectedStaff.status !== "available") {
+      toast.error("Selected staff is not available");
+      return;
+    }
+
+    if (selectedEquipment.status !== "available") {
+      toast.error("Selected equipment is not available");
+      return;
+    }
+
+    if (selectedEquipment.type !== request.equipmentType) {
+      toast.error("Selected equipment type does not match request");
       return;
     }
 
@@ -167,8 +189,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ? {
               ...r,
               status: "assigned" as const,
-              assignedStaff: availableStaff.id,
-              assignedEquipment: availableEquipment.id,
+              assignedStaff: staffId,
+              assignedEquipment: equipmentId,
             }
           : r,
       ),
@@ -176,15 +198,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     setStaff((prevStaff) =>
       prevStaff.map((s) =>
-        s.id === availableStaff.id
+        s.id === staffId
           ? {
               ...s,
               status: "busy" as const,
               currentWorkload: s.currentWorkload + 1,
-              assignedEquipment: [
-                ...(s.assignedEquipment || []),
-                availableEquipment.id,
-              ],
+              assignedEquipment: [...(s.assignedEquipment || []), equipmentId],
             }
           : s,
       ),
@@ -192,18 +211,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     setEquipment((prevEquipment) =>
       prevEquipment.map((eq) =>
-        eq.id === availableEquipment.id
+        eq.id === equipmentId
           ? {
               ...eq,
               status: "in-use" as const,
-              assignedStaff: availableStaff.id,
+              assignedStaff: staffId,
               currentRequest: requestId,
             }
           : eq,
       ),
     );
 
-    toast.success(`Request assigned to ${availableStaff.name}`);
+    toast.success(`Request assigned to ${selectedStaff.name}`);
   };
 
   const handleCancelRequest = (requestId: string) => {
@@ -233,6 +252,103 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     setEquipment((prevEquipment) => [...prevEquipment, newEquipment]);
     toast.success("New equipment added");
+  };
+
+  const handleUpdateEquipment = (
+    equipmentId: string,
+    updates: Partial<TransportEquipment>,
+  ) => {
+    setEquipment((prevEquipment) =>
+      prevEquipment.map((eq) =>
+        eq.id === equipmentId
+          ? {
+              ...eq,
+              ...updates,
+              location: updates.location
+                ? { ...eq.location, ...updates.location }
+                : eq.location,
+            }
+          : eq,
+      ),
+    );
+    toast.success("Equipment updated");
+  };
+
+  const handleDeleteEquipment = (equipmentId: string) => {
+    setEquipment((prevEquipment) =>
+      prevEquipment.filter((eq) => eq.id !== equipmentId),
+    );
+    toast.success("Equipment deleted");
+  };
+
+  const handleAssignEquipmentLocation = (
+    equipmentId: string,
+    floor: number,
+    zone: string,
+  ) => {
+    setEquipment((prevEquipment) =>
+      prevEquipment.map((eq) =>
+        eq.id === equipmentId
+          ? {
+              ...eq,
+              location: {
+                ...eq.location,
+                floor,
+                zone,
+              },
+            }
+          : eq,
+      ),
+    );
+    toast.success("Equipment location assigned");
+  };
+
+  const handleAddStaff = (staffData: Partial<StaffMember>) => {
+    const newStaff: StaffMember = {
+      id: `STAFF-${Date.now()}`,
+      name: staffData.name || "New Staff",
+      role: staffData.role || "Patient Transport",
+      status: staffData.status || "available",
+      location: staffData.location || {
+        x: 200,
+        y: 200,
+        floor: 1,
+        zone: "Emergency",
+      },
+      currentWorkload: staffData.currentWorkload ?? 0,
+      completedToday: staffData.completedToday ?? 0,
+      assignedEquipment: staffData.assignedEquipment,
+    };
+
+    setStaff((prevStaff) => [...prevStaff, newStaff]);
+    toast.success("New staff added");
+  };
+
+  const handleUpdateStaff = (
+    staffId: string,
+    updates: Partial<StaffMember>,
+  ) => {
+    setStaff((prevStaff) =>
+      prevStaff.map((member) =>
+        member.id === staffId
+          ? {
+              ...member,
+              ...updates,
+              location: updates.location
+                ? { ...member.location, ...updates.location }
+                : member.location,
+            }
+          : member,
+      ),
+    );
+    toast.success("Staff updated");
+  };
+
+  const handleDeleteStaff = (staffId: string) => {
+    setStaff((prevStaff) =>
+      prevStaff.filter((member) => member.id !== staffId),
+    );
+    toast.success("Staff deleted");
   };
 
   const handleAddAccessPoint = (accessPointData: Partial<AccessPoint>) => {
@@ -292,6 +408,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         handleCancelRequest,
         handleNewRequest,
         handleAddEquipment,
+        handleUpdateEquipment,
+        handleDeleteEquipment,
+        handleAssignEquipmentLocation,
+        handleAddStaff,
+        handleUpdateStaff,
+        handleDeleteStaff,
         handleAddAccessPoint,
         handleFloorConfigUpdate,
       }}

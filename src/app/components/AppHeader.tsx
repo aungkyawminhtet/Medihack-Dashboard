@@ -1,7 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router";
 import { Button } from "./ui/button";
-import { Card, CardContent } from "./ui/card";
 import {
   Activity,
   Users,
@@ -19,13 +18,7 @@ import { useApp } from "../context/AppContext";
 export function AppHeader({ onNewRequest }: { onNewRequest?: () => void }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { equipment, staff, requests, user, logout } = useApp();
-
-  const availableEquipment = equipment.filter(
-    (eq) => eq.status === "available",
-  ).length;
-  const pendingRequests = requests.filter((r) => r.status === "pending").length;
-  const availableStaff = staff.filter((s) => s.status === "available").length;
+  const { user, logout } = useApp();
 
   const handleLogout = () => {
     logout();
@@ -42,9 +35,9 @@ export function AppHeader({ onNewRequest }: { onNewRequest?: () => void }) {
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-lg flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 cursor-pointer">
+          <div className="w-11 h-11 bg-[conic-gradient(at_30%_30%,#1d4ed8,#06b6d4,#10b981)] rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer">
             <Activity className="h-6 w-6 text-white" />
           </div>
           <div>
@@ -57,41 +50,7 @@ export function AppHeader({ onNewRequest }: { onNewRequest?: () => void }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Stats */}
-          <div className="flex items-center gap-3">
-            <Card className=" hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer">
-              <CardContent className="p-3">
-                <div className="text-xs text-muted-foreground">
-                  Available Equipment
-                </div>
-                <div className="text-2xl font-bold text-green-600">
-                  {availableEquipment}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer">
-              <CardContent className="p-3">
-                <div className="text-xs text-muted-foreground">
-                  Pending Requests
-                </div>
-                <div className="text-2xl font-bold text-orange-600">
-                  {pendingRequests}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer">
-              <CardContent className="p-4">
-                <div className="text-xs text-muted-foreground">
-                  Active Staff
-                </div>
-                <div className="text-2xl font-bold text-blue-600">
-                  {availableStaff}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -107,16 +66,6 @@ export function AppHeader({ onNewRequest }: { onNewRequest?: () => void }) {
             >
               <Settings className="h-4 w-4" />
             </Button>
-            {onNewRequest && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onNewRequest}
-                className="hover:bg-green-50 hover:scale-110 transition-all duration-300 hover:text-green-600"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            )}
             {user && (
               <div className="flex items-center gap-2 pl-2 border-l border-gray-200">
                 <div className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-50 transition-all duration-300">
@@ -148,13 +97,13 @@ export function AppHeader({ onNewRequest }: { onNewRequest?: () => void }) {
         {navItems.map((item, index) => (
           <Button
             key={item.path}
-            variant={location.pathname === item.path ? "default" : "ghost"}
+            variant="ghost"
             size="sm"
             onClick={() => navigate(item.path)}
-            className={`flex items-center gap-2 transition-all duration-300 ${
+            className={`flex items-center gap-2 rounded-none border-b-2 px-3 transition-all duration-300 ${
               location.pathname === item.path
-                ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg"
-                : "hover:bg-gray-100 hover:scale-105"
+                ? "border-blue-600 text-blue-700"
+                : "border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-900"
             }`}
             style={{ animationDelay: `${index * 50}ms` } as React.CSSProperties}
           >

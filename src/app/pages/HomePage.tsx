@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Plus, Building2, Layers } from "lucide-react";
+import { Plus, Building2, Layers, Bed, Bell, Users } from "lucide-react";
 import { useApp } from "../context/AppContext";
 
 export default function HomePage() {
@@ -21,6 +21,7 @@ export default function HomePage() {
   const {
     equipment,
     staff,
+    requests,
     accessPoints,
     floorConfig,
     selectedFloor,
@@ -44,6 +45,12 @@ export default function HomePage() {
   const enabledFloors = floorConfig
     .filter((f) => f.enabled)
     .sort((a, b) => a.number - b.number);
+
+  const availableEquipment = equipment.filter(
+    (eq) => eq.status === "available",
+  ).length;
+  const pendingRequests = requests.filter((r) => r.status === "pending").length;
+  const availableStaff = staff.filter((s) => s.status === "available").length;
 
   const handleEquipmentClick = (eq: any) => {
     setSelectedEquipment(eq);
@@ -69,6 +76,59 @@ export default function HomePage() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden p-6">
+        {/* Dashboard Stats */}
+        <div className="grid grid-cols-1 gap-3 mb-4 md:grid-cols-3">
+          <Card className="border border-green-100 bg-green-50/60 hover:shadow-md transition-all duration-300">
+            <CardContent className="px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center">
+                  <Bed className="h-4 w-4 text-green-700" />
+                </div>
+                <div>
+                  <div className="text-xs text-green-800/70">
+                    Available Equipment
+                  </div>
+                  <div className="text-2xl font-semibold text-green-700">
+                    {availableEquipment}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border border-orange-100 bg-orange-50/60 hover:shadow-md transition-all duration-300">
+            <CardContent className="px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-orange-100 flex items-center justify-center">
+                  <Bell className="h-4 w-4 text-orange-700" />
+                </div>
+                <div>
+                  <div className="text-xs text-orange-800/70">
+                    Pending Requests
+                  </div>
+                  <div className="text-2xl font-semibold text-orange-700">
+                    {pendingRequests}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border border-blue-100 bg-blue-50/60 hover:shadow-md transition-all duration-300">
+            <CardContent className="px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-blue-700" />
+                </div>
+                <div>
+                  <div className="text-xs text-blue-800/70">Active Staff</div>
+                  <div className="text-2xl font-semibold text-blue-700">
+                    {availableStaff}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Floor Selector */}
         <div className="bg-white border border-gray-200 rounded-lg px-4 py-3 mb-4 shadow-sm hover:shadow-md transition-all duration-300">
           <div className="flex items-center justify-between">
