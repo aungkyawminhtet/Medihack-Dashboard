@@ -1,0 +1,314 @@
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import {
+  TransportEquipment,
+  StaffMember,
+  TransportRequest,
+} from "../types/transport";
+import { AccessPoint } from "../types/access-point";
+import { FloorConfig } from "../types/floor-config";
+import {
+  transportEquipmentData,
+  transportStaffData,
+  transportRequestsData,
+  accessPointsData,
+  DEFAULT_FLOOR_CONFIG,
+} from "../api";
+import { toast } from "sonner";
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: "admin" | "staff" | "manager";
+}
+
+interface AppContextType {
+  // Auth
+  user: User | null;
+  isLoggedIn: boolean;
+  login: (user: User) => void;
+  logout: () => void;
+  equipment: TransportEquipment[];
+  setEquipment: React.Dispatch<React.SetStateAction<TransportEquipment[]>>;
+  staff: StaffMember[];
+  setStaff: React.Dispatch<React.SetStateAction<StaffMember[]>>;
+  requests: TransportRequest[];
+  setRequests: React.Dispatch<React.SetStateAction<TransportRequest[]>>;
+  accessPoints: AccessPoint[];
+  setAccessPoints: React.Dispatch<React.SetStateAction<AccessPoint[]>>;
+  floorConfig: FloorConfig[];
+  setFloorConfig: React.Dispatch<React.SetStateAction<FloorConfig[]>>;
+  selectedFloor: number;
+  setSelectedFloor: React.Dispatch<React.SetStateAction<number>>;
+  selectedEquipment: TransportEquipment | null;
+  setSelectedEquipment: React.Dispatch<
+    React.SetStateAction<TransportEquipment | null>
+  >;
+  selectedStaff: StaffMember | null;
+  setSelectedStaff: React.Dispatch<React.SetStateAction<StaffMember | null>>;
+  selectedAccessPoint: AccessPoint | null;
+  setSelectedAccessPoint: React.Dispatch<
+    React.SetStateAction<AccessPoint | null>
+  >;
+  handleAssignRequest: (requestId: string) => void;
+  handleCancelRequest: (requestId: string) => void;
+  handleNewRequest: (requestData: Partial<TransportRequest>) => void;
+  handleAddEquipment: (equipmentData: Partial<TransportEquipment>) => void;
+  handleAddAccessPoint: (accessPointData: Partial<AccessPoint>) => void;
+  handleFloorConfigUpdate: (newConfig: FloorConfig[]) => void;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+export function AppProvider({ children }: { children: ReactNode }) {
+  // Auth state
+  const [user, setUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+
+  const [equipment, setEquipment] = useState<TransportEquipment[]>(
+    transportEquipmentData,
+  );
+  const [staff, setStaff] = useState<StaffMember[]>(transportStaffData);
+  const [requests, setRequests] = useState<TransportRequest[]>(
+    transportRequestsData,
+  );
+  const [accessPoints, setAccessPoints] =
+    useState<AccessPoint[]>(accessPointsData);
+  const [floorConfig, setFloorConfig] =
+    useState<FloorConfig[]>(DEFAULT_FLOOR_CONFIG);
+  const [selectedFloor, setSelectedFloor] = useState(1);
+  const [selectedEquipment, setSelectedEquipment] =
+    useState<TransportEquipment | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const [selectedAccessPoint, setSelectedAccessPoint] =
+    useState<AccessPoint | null>(null);
+
+  // Simulate real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+ 
+      setEquipment((prevEquipment) =>
+        prevEquipment.map((eq) => {
+          if (eq.status === "in-use" || eq.status === "requested") {
+            return {
+              ...eq,
+              location: {
+                ...eq.location,
+                x: Math.max(
+                  50,
+                  Math.min(850, eq.location.x + (Math.random() - 0.5) * 20),
+                ),
+                y: Math.max(
+                  50,
+                  Math.min(550, eq.location.y + (Math.random() - 0.5) * 20),
+                ),
+              },
+            };
+          }
+          return eq;
+        }),
+      );
+
+      // Simulate staff movement
+      setStaff((prevStaff) =>
+        prevStaff.map((s) => ({
+          ...s,
+          location: {
+            ...s.location,
+            x: Math.max(
+              50,
+              Math.min(850, s.location.x + (Math.random() - 0.5) * 15),
+            ),
+            y: Math.max(
+              50,
+              Math.min(550, s.location.y + (Math.random() - 0.5) * 15),
+            ),
+          },
+        })),
+      );
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleAssignRequest = (requestId: string) => {
+    const request = requests.find((r) => r.id === requestId);
+    if (!request) return;
+
+    const availableStaff = staff
+      .filter((s) => s.status === "available")
+      .sort((a, b) => a.currentWorkload - b.currentWorkload)[0];
+
+    const availableEquipment = equipment.find(
+      (eq) => eq.type === request.equipmentType && eq.status === "available",
+    );
+
+    if (!availableStaff) {
+      toast.error("No available staff to assign");
+      return;
+    }
+
+    if (!availableEquipment) {
+      toast.error(`No available ${request.equipmentType} to assign`);
+      return;
+    }
+
+    setRequests((prevRequests) =>
+      prevRequests.map((r) =>
+        r.id === requestId
+          ? {
+              ...r,
+              status: "assigned" as const,
+              assignedStaff: availableStaff.id,
+              assignedEquipment: availableEquipment.id,
+            }
+          : r,
+      ),
+    );
+
+    setStaff((prevStaff) =>
+      prevStaff.map((s) =>
+        s.id === availableStaff.id
+          ? {
+              ...s,
+              status: "busy" as const,
+              currentWorkload: s.currentWorkload + 1,
+              assignedEquipment: [
+                ...(s.assignedEquipment || []),
+                availableEquipment.id,
+              ],
+            }
+          : s,
+      ),
+    );
+
+    setEquipment((prevEquipment) =>
+      prevEquipment.map((eq) =>
+        eq.id === availableEquipment.id
+          ? {
+              ...eq,
+              status: "in-use" as const,
+              assignedStaff: availableStaff.id,
+              currentRequest: requestId,
+            }
+          : eq,
+      ),
+    );
+
+    toast.success(`Request assigned to ${availableStaff.name}`);
+  };
+
+  const handleCancelRequest = (requestId: string) => {
+    setRequests((prevRequests) =>
+      prevRequests.map((r) =>
+        r.id === requestId ? { ...r, status: "cancelled" as const } : r,
+      ),
+    );
+    toast.info("Request cancelled");
+  };
+
+  const handleNewRequest = (requestData: Partial<TransportRequest>) => {
+    const newRequest: TransportRequest = {
+      id: `REQ-${Date.now()}`,
+      ...requestData,
+    } as TransportRequest;
+
+    setRequests((prevRequests) => [...prevRequests, newRequest]);
+    toast.success("New transport request created");
+  };
+
+  const handleAddEquipment = (equipmentData: Partial<TransportEquipment>) => {
+    const newEquipment: TransportEquipment = {
+      id: `EQ-${Date.now()}`,
+      ...equipmentData,
+    } as TransportEquipment;
+
+    setEquipment((prevEquipment) => [...prevEquipment, newEquipment]);
+    toast.success("New equipment added");
+  };
+
+  const handleAddAccessPoint = (accessPointData: Partial<AccessPoint>) => {
+    const newAccessPoint: AccessPoint = {
+      id: `AP-${Date.now()}`,
+      ...accessPointData,
+    } as AccessPoint;
+
+    setAccessPoints((prevAccessPoints) => [
+      ...prevAccessPoints,
+      newAccessPoint,
+    ]);
+    toast.success("New access point added");
+  };
+
+  const handleFloorConfigUpdate = (newConfig: FloorConfig[]) => {
+    setFloorConfig(newConfig);
+    toast.success("Floor configuration updated");
+  };
+
+  const login = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+  };
+
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem("user");
+  };
+
+  return (
+    <AppContext.Provider
+      value={{
+        user,
+        isLoggedIn: user !== null,
+        login,
+        logout,
+        equipment,
+        setEquipment,
+        staff,
+        setStaff,
+        requests,
+        setRequests,
+        accessPoints,
+        setAccessPoints,
+        floorConfig,
+        setFloorConfig,
+        selectedFloor,
+        setSelectedFloor,
+        selectedEquipment,
+        setSelectedEquipment,
+        selectedStaff,
+        setSelectedStaff,
+        selectedAccessPoint,
+        setSelectedAccessPoint,
+        handleAssignRequest,
+        handleCancelRequest,
+        handleNewRequest,
+        handleAddEquipment,
+        handleAddAccessPoint,
+        handleFloorConfigUpdate,
+      }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
+}
+
+export function useApp() {
+  const context = useContext(AppContext);
+  if (context === undefined) {
+    throw new Error("useApp must be used within an AppProvider");
+  }
+  return context;
+}
+
+export function useAppContext() {
+  return useApp();
+}
