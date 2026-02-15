@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { AppHeader } from "../components/AppHeader";
 import { RequestQueue } from "../components/RequestQueue";
 import { NewRequestDialog } from "../components/NewRequestDialog";
@@ -28,45 +28,92 @@ import { Button } from "../components/ui/button";
 import { useApp } from "../context/AppContext";
 import { Badge } from "../components/ui/badge";
 import { TransportRequest } from "../types/transport";
-import { UserCheck, Plus } from "lucide-react";
+import { UserCheck, Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  getAllRequests,
+  createRequest,
+  assignRequest,
+  cancelRequest,
+} from "../api/requests";
+import { getAvailableEquipment } from "../api/equipment/index";
+import { getAvailablePorters } from "../api/staff";
 
 export default function RequestsPage() {
-  const {
-    requests,
-    staff,
-    equipment,
-    handleAssignRequest,
-    handleCancelRequest,
-    handleNewRequest,
-  } = useApp();
+  const { user } = useApp();
+
+  // State for requests (now from API)
+  const [requests, setRequests] = useState<any[]>([]);
+  const [staff, setStaff] = useState<any[]>([]);
+  const [equipment, setEquipment] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const token = localStorage.getItem("token");
 
   const [showNewRequestDialog, setShowNewRequestDialog] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState<
     string | undefined
   >();
   const [assignOpen, setAssignOpen] = useState(false);
-  const [assignTarget, setAssignTarget] = useState<TransportRequest | null>(
-    null,
-  );
+  const [assignTarget, setAssignTarget] = useState<any | null>(null);
   const [assignForm, setAssignForm] = useState({
     requestId: "",
     staffId: "",
     equipmentId: "",
   });
+  const [assignLoading, setAssignLoading] = useState(false);
+
+  // Fetch requests from API on mount
+  useEffect(() => {
+    fetchRequests();
+    fetchStaff();
+    fetchEquipment();
+  }, []);
+
+  const fetchRequests = async () => {
+    setLoading(true);
+    try {
+      const response = await getAllRequests(token || undefined);
+      // console.log("Requests response:", response);
+      setRequests(response.data || []);
+    } catch (error: any) {
+      console.error("Failed to fetch requests:", error);
+      toast.error("Failed to load requests");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStaff = async () => {
+    try {
+      const response = await getAvailablePorters(token || undefined);
+      // console.log("Staff response:", response);
+      setStaff(response.data || []);
+    } catch (error: any) {
+      console.error("Failed to fetch staff:", error);
+      toast.error("Failed to load staff");
+    }
+  };
+
+  const fetchEquipment = async () => {
+    try {
+      const response = await getAvailableEquipment(token || undefined);
+      setEquipment(response.data || []);
+    } catch (error: any) {
+      console.error("Failed to fetch equipment:", error);
+      toast.error("Failed to load equipment");
+    }
+  };
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
   const assignedCount = requests.filter((r) => r.status === "assigned").length;
   const inProgressCount = requests.filter(
-    (r) => r.status === "in-progress",
+    (r) => r.status === "in_progress",
   ).length;
   const completedCount = requests.filter(
     (r) => r.status === "completed",
   ).length;
 
-  const availableStaff = useMemo(
-    () => staff.filter((s) => s.status === "available"),
-    [staff],
-  );
+  const availableStaff = useMemo(() => staff, [staff]);
 
   const pendingRequests = useMemo(
     () => requests.filter((r) => r.status === "pending"),
@@ -74,18 +121,15 @@ export default function RequestsPage() {
   );
 
   const availableEquipment = useMemo(() => {
-    if (!assignTarget) return [];
-    return equipment.filter(
-      (eq) =>
-        eq.status === "available" && eq.type === assignTarget.equipmentType,
-    );
-  }, [equipment, assignTarget]);
+    // Return all equipment without filtering by type
+    return equipment;
+  }, [equipment]);
 
-  const openAssignDialog = (request?: TransportRequest) => {
+  const openAssignDialog = (request?: any) => {
     if (request) {
       setAssignTarget(request);
       setAssignForm({
-        requestId: request.id,
+        requestId: request._id || request.id,
         staffId: "",
         equipmentId: "",
       });
@@ -97,27 +141,46 @@ export default function RequestsPage() {
         equipmentId: "",
       });
     }
+    // Refresh staff and equipment list when opening dialog
+    fetchStaff();
+    fetchEquipment();
     setAssignOpen(true);
   };
 
-  const handleAssignSubmit = (event: React.FormEvent) => {
+  const handleAssignSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const targetRequest =
-      assignTarget || requests.find((r) => r.id === assignForm.requestId);
+      assignTarget ||
+      requests.find((r) => (r._id || r.id) === assignForm.requestId);
     if (!targetRequest || !assignForm.staffId || !assignForm.equipmentId)
       return;
 
-    handleAssignRequest(
-      targetRequest.id,
-      assignForm.staffId,
-      assignForm.equipmentId,
-    );
-    setAssignOpen(false);
-    setAssignTarget(null);
+    setAssignLoading(true);
+    try {
+      const requestId = targetRequest._id || targetRequest.id;
+      await assignRequest(
+        requestId,
+        {
+          porter_id: assignForm.staffId,
+          equipment_id: assignForm.equipmentId,
+        },
+        token || undefined,
+      );
+
+      toast.success("Request assigned successfully!");
+      setAssignOpen(false);
+      setAssignTarget(null);
+      fetchRequests(); // Refresh the list
+    } catch (error: any) {
+      console.error("Failed to assign request:", error);
+      toast.error(error.message || "Failed to assign request");
+    } finally {
+      setAssignLoading(false);
+    }
   };
 
   const handleRequestChange = (requestId: string) => {
-    const request = requests.find((r) => r.id === requestId);
+    const request = requests.find((r) => (r._id || r.id) === requestId);
     setAssignTarget(request || null);
     setAssignForm({
       ...assignForm,
@@ -125,6 +188,29 @@ export default function RequestsPage() {
       staffId: "",
       equipmentId: "",
     });
+  };
+
+  const handleCancelRequestClick = async (requestId: string) => {
+    try {
+      await cancelRequest(requestId, token || undefined);
+      toast.success("Request cancelled successfully!");
+      fetchRequests(); // Refresh the list
+    } catch (error: any) {
+      console.error("Failed to cancel request:", error);
+      toast.error(error.message || "Failed to cancel request");
+    }
+  };
+
+  const handleCreateRequest = async (data: any) => {
+    try {
+      await createRequest(data, token || undefined);
+      toast.success("Request created successfully!");
+      setShowNewRequestDialog(false);
+      fetchRequests(); // Refresh the list
+    } catch (error: any) {
+      console.error("Failed to create request:", error);
+      toast.error(error.message || "Failed to create request");
+    }
   };
 
   return (
@@ -205,23 +291,26 @@ export default function RequestsPage() {
 
         {/* Request Queue */}
         <div className="flex-1 bg-white rounded-lg border overflow-y-auto">
-          <RequestQueue
-            requests={requests}
-            onRequestSelect={(req) => setSelectedRequestId(req.id)}
-            selectedRequestId={selectedRequestId}
-            onOpenAssignDialog={openAssignDialog}
-            onCancelRequest={handleCancelRequest}
-          />
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <RequestQueue
+              requests={requests}
+              onRequestSelect={(req) => setSelectedRequestId(req._id || req.id)}
+              selectedRequestId={selectedRequestId}
+              onOpenAssignDialog={openAssignDialog}
+              onCancelRequest={handleCancelRequestClick}
+            />
+          )}
         </div>
       </div>
 
       <NewRequestDialog
         open={showNewRequestDialog}
         onClose={() => setShowNewRequestDialog(false)}
-        onAddRequest={(data) => {
-          handleNewRequest(data);
-          setShowNewRequestDialog(false);
-        }}
+        onAddRequest={handleCreateRequest}
       />
 
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
@@ -231,7 +320,7 @@ export default function RequestsPage() {
             <DialogDescription>
               Assign staff and equipment to{" "}
               {assignTarget
-                ? `request ${assignTarget.id}`
+                ? `request ${assignTarget._id || assignTarget.id}`
                 : "a pending request"}
             </DialogDescription>
           </DialogHeader>
@@ -256,8 +345,13 @@ export default function RequestsPage() {
                         </SelectItem>
                       ) : (
                         pendingRequests.map((req) => (
-                          <SelectItem key={req.id} value={req.id}>
-                            {req.id} - {req.patientInfo.name} ({req.priority})
+                          <SelectItem
+                            key={req._id || req.id}
+                            value={req._id || req.id}
+                          >
+                            {req._id || req.id} -{" "}
+                            {req.patient_name || req.patientInfo?.name}{" "}
+                            (Priority: {req.priority})
                           </SelectItem>
                         ))
                       )}
@@ -270,20 +364,29 @@ export default function RequestsPage() {
               {assignTarget && (
                 <div className="bg-gray-50 p-3 rounded-lg border">
                   <div className="text-sm font-medium mb-1">
-                    Patient: {assignTarget.patientInfo.name}
+                    Patient:{" "}
+                    {assignTarget.patient_name ||
+                      assignTarget.patientInfo?.name}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    From: Floor {assignTarget.origin.floor},{" "}
-                    {assignTarget.origin.zone} → Floor{" "}
-                    {assignTarget.destination.floor},{" "}
-                    {assignTarget.destination.zone}
+                    Equipment Type:{" "}
+                    {assignTarget.equipment_type || assignTarget.equipmentType}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    Equipment Type:{" "}
-                    {assignTarget.equipmentType === "stretcher"
-                      ? "Stretcher"
-                      : "Wheelchair"}
+                    Priority:{" "}
+                    {assignTarget.priority === 1
+                      ? "STAT"
+                      : assignTarget.priority === 2
+                        ? "HIGH"
+                        : assignTarget.priority === 3
+                          ? "NORMAL"
+                          : "LOW"}
                   </div>
+                  {assignTarget.notes && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Notes: {assignTarget.notes}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -307,8 +410,8 @@ export default function RequestsPage() {
                       </SelectItem>
                     ) : (
                       availableStaff.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name} - {s.role} (Workload: {s.currentWorkload})
+                        <SelectItem key={s._id || s.id} value={s._id || s.id}>
+                          {s.name} - {s.full_name}
                         </SelectItem>
                       ))
                     )}
@@ -332,15 +435,18 @@ export default function RequestsPage() {
                   <SelectContent>
                     {availableEquipment.length === 0 ? (
                       <SelectItem value="none" disabled>
-                        No available {assignTarget?.equipmentType}s
+                        No available{" "}
+                        {assignTarget?.equipment_type ||
+                          assignTarget?.equipmentType ||
+                          "equipment"}
                       </SelectItem>
                     ) : (
                       availableEquipment.map((eq) => (
-                        <SelectItem key={eq.id} value={eq.id}>
-                          {eq.id} - Floor {eq.location.floor},{" "}
-                          {eq.location.zone}
-                          {eq.batteryLevel !== undefined &&
-                            ` (Battery: ${eq.batteryLevel}%)`}
+                        <SelectItem
+                          key={eq._id || eq.id}
+                          value={eq._id || eq.id}
+                        >
+                          {eq.type}
                         </SelectItem>
                       ))
                     )}
@@ -359,12 +465,20 @@ export default function RequestsPage() {
               <Button
                 type="submit"
                 disabled={
+                  assignLoading ||
                   (!assignTarget && !assignForm.requestId) ||
                   !assignForm.staffId ||
                   !assignForm.equipmentId
                 }
               >
-                Assign Request
+                {assignLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Assigning...
+                  </>
+                ) : (
+                  "Assign Request"
+                )}
               </Button>
             </DialogFooter>
           </form>

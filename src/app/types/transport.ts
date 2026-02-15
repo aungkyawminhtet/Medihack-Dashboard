@@ -57,31 +57,42 @@ export interface StaffMember {
 // Transport Request
 export interface TransportRequest {
   id: string;
-  priority: RequestPriority;
+  _id?: string; // MongoDB ID from API
+  priority: RequestPriority | number; // Can be enum or number from API
   status: RequestStatus;
-  patientInfo: {
+
+  // API fields
+  patient_name?: string;
+  equipment_type?: string;
+  pickup_room_id?: string;
+  destination_room_id?: string;
+  porter_id?: string;
+  equipment_id?: string;
+  notes?: string;
+
+  // Legacy/mock fields (optional)
+  patientInfo?: {
     id: string;
     name: string;
     age?: number;
     roomNumber: string;
   };
-  origin: {
+  origin?: {
     floor: number;
     zone: string;
     room: string;
   };
-  destination: {
+  destination?: {
     floor: number;
     zone: string;
     room: string;
   };
-  equipmentType: EquipmentType;
-  requestedBy: string; // Staff name
-  requestedAt: Date;
+  equipmentType?: EquipmentType;
+  requestedBy?: string; // Staff name
+  requestedAt?: Date;
   assignedStaff?: string; // Staff ID
   assignedEquipment?: string; // Equipment ID
   estimatedDuration?: number; // minutes
-  notes?: string;
 }
 
 // Optimal Placement Suggestion

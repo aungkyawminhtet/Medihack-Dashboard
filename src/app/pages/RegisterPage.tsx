@@ -3,23 +3,27 @@ import { useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { useAppContext } from "../context/AppContext";
 import { toast } from "sonner";
 import { Activity, Mail, Lock, Eye, EyeOff, User, Phone } from "lucide-react";
+import { register as apiRegister } from "../api/login";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { login } = useAppContext();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [errors, setErrors] = useState({
     name: "",
     email: "",
-    phone: "",
     password: "",
+    confirmPassword: "",
   });
 
   useEffect(() => {
@@ -27,37 +31,37 @@ export default function RegisterPage() {
   }, []);
 
   const validateForm = () => {
-    const newErrors = { name: "", email: "", phone: "", password: "" };
+    const newErrors = {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    };
 
     if (!name.trim()) {
       newErrors.name = "Name is required";
+    } else if (name.trim().length < 2) {
+      newErrors.name = "Name must be at least 2 characters";
     }
 
     if (!email.trim()) {
       newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Please enter a valid email";
-    }
-
-    if (!phone.trim()) {
-      newErrors.phone = "Phone number is required";
-    } else if (!/^\+?[0-9\s\-()]{7,}$/.test(phone)) {
-      newErrors.phone = "Please enter a valid phone number";
     }
 
     if (!password.trim()) {
       newErrors.password = "Password is required";
-    } else if (password.length < 4) {
-      newErrors.password = "Password must be at least 4 characters";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    if (!confirmPassword.trim()) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     setErrors(newErrors);
-    return (
-      !newErrors.name &&
-      !newErrors.email &&
-      !newErrors.phone &&
-      !newErrors.password
-    );
+    return !Object.values(newErrors).some((error) => error !== "");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,11 +74,40 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      // Call backend register API
+      const response: any = await apiRegister({ email, password, name });
+      console.log("Full response:", response);
+
+      // Validate response structure
+      if (!response) {
+        throw new Error("No response from server");
+      }
+
+      // Check if response has data property (axios response structure)
+      const userData = response.data ? response.data : response;
+
+      // Check if token exists
+      if (!userData.token) {
+        throw new Error("Token not found in response");
+      }
+
+      // Only store token in localStorage
+      localStorage.setItem("token", userData.token);
+      console.log("Token stored:", userData.token);
+
+      // Update app context with user data
+      login({
+        id: userData._id || "1",
+        email: userData.email,
+        name: userData.name || "User",
+        role: "staff",
+      });
+
       toast.success("Account created successfully!");
-      navigate("/login");
-    } catch (error) {
-      toast.error("An error occurred during registration");
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      toast.error(error.message || "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -189,41 +222,6 @@ export default function RegisterPage() {
                 className={`space-y-2 transform transition-all duration-700 delay-300 ${mounted ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
               >
                 <Label
-                  htmlFor="phone"
-                  className="text-white/80 text-sm font-medium"
-                >
-                  Phone Number
-                </Label>
-                <div className="relative group">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-400/60 group-focus-within:text-blue-400 transition-colors" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+1 (555) 123-4567"
-                    value={phone}
-                    onChange={(e) => {
-                      setPhone(e.target.value);
-                      if (errors.phone) setErrors({ ...errors, phone: "" });
-                    }}
-                    disabled={isLoading}
-                    className={`pl-12 bg-white/5 border transition-all duration-300 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-blue-400 outline-none ${
-                      errors.phone
-                        ? "border-red-500/70 focus:border-red-500"
-                        : "border-white/20 hover:border-white/30"
-                    }`}
-                  />
-                </div>
-                {errors.phone && (
-                  <p className="text-red-400 text-sm animate-fadeIn">
-                    {errors.phone}
-                  </p>
-                )}
-              </div>
-
-              <div
-                className={`space-y-2 transform transition-all duration-700 delay-350 ${mounted ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
-              >
-                <Label
                   htmlFor="password"
                   className="text-white/80 text-sm font-medium"
                 >
@@ -234,7 +232,7 @@ export default function RegisterPage() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Create a password"
+                    placeholder="At least 6 characters"
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
@@ -268,14 +266,66 @@ export default function RegisterPage() {
                 )}
               </div>
 
+              <div
+                className={`space-y-2 transform transition-all duration-700 delay-400 ${
+                  mounted
+                    ? "opacity-100 translate-x-0"
+                    : "opacity-0 -translate-x-4"
+                }`}
+              >
+                <Label
+                  htmlFor="confirmPassword"
+                  className="text-white/80 text-sm font-medium"
+                >
+                  Confirm Password
+                </Label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-400/60 group-focus-within:text-blue-400 transition-colors" />
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      if (errors.confirmPassword)
+                        setErrors({ ...errors, confirmPassword: "" });
+                    }}
+                    disabled={isLoading}
+                    className={`pl-12 pr-12 bg-white/5 border transition-all duration-300 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-blue-400 outline-none ${
+                      errors.confirmPassword
+                        ? "border-red-500/70 focus:border-red-500"
+                        : "border-white/20 hover:border-white/30"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-400/60 hover:text-blue-400 transition-colors"
+                    disabled={isLoading}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-red-400 text-sm animate-fadeIn">
+                    {errors.confirmPassword}
+                  </p>
+                )}
+              </div>
+
               <Button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform mt-4 ${
+                className={`w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 transform mt-6 ${
                   isLoading
                     ? "scale-95 opacity-80"
                     : "hover:scale-105 active:scale-95"
-                } ${mounted ? "opacity-100 translate-y-0 delay-400" : "opacity-0 translate-y-4"}`}
+                } ${mounted ? "opacity-100 translate-y-0 delay-500" : "opacity-0 translate-y-4"}`}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-2">
@@ -286,22 +336,28 @@ export default function RegisterPage() {
                   "Create Account"
                 )}
               </Button>
+
+              <div className="text-center text-sm text-white/70">
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate("/login")}
+                  className="text-white underline hover:text-white"
+                >
+                  Sign in
+                </button>
+              </div>
             </form>
           </div>
         </div>
 
         <div
-          className={`text-center mt-6 transform transition-all duration-700 delay-600 ${mounted ? "opacity-100" : "opacity-0"}`}
+          className={`text-center mt-6 transform transition-all duration-700 delay-700 ${
+            mounted ? "opacity-100" : "opacity-0"
+          }`}
         >
           <p className="text-white/60 text-sm">
-            Already have an account?{" "}
-            <button
-              type="button"
-              onClick={() => navigate("/login")}
-              className="text-white underline hover:text-white"
-            >
-              Sign in
-            </button>
+            Patient Transport & Equipment Management
           </p>
         </div>
       </div>

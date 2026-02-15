@@ -11,10 +11,10 @@ import { login as apiLogin } from "../api/login";
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAppContext();
-  const [email, setEmail] = useState("");
+  const [employeecode, setEmployeecode] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({ employeecode: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -23,12 +23,10 @@ export default function LoginPage() {
   }, []);
 
   const validateForm = () => {
-    const newErrors = { email: "", password: "" };
+    const newErrors = { employeecode: "", password: "" };
 
-    if (!email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Please enter a valid email";
+    if (!employeecode.trim()) {
+      newErrors.employeecode = "Employee code is required";
     }
 
     if (!password.trim()) {
@@ -38,7 +36,7 @@ export default function LoginPage() {
     }
 
     setErrors(newErrors);
-    return !newErrors.email && !newErrors.password;
+    return !newErrors.employeecode && !newErrors.password;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,7 +50,7 @@ export default function LoginPage() {
 
     try {
       // Call backend login API
-      const response: any = await apiLogin({ email, password });
+      const response: any = await apiLogin({ employeecode, password });
       console.log("Full response:", response);
 
       // Validate response structure
@@ -82,11 +80,9 @@ export default function LoginPage() {
 
       toast.success("Login successful!");
       navigate("/");
-
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "Invalid email or password");
-
     } finally {
       setIsLoading(false);
     }
@@ -137,33 +133,34 @@ export default function LoginPage() {
                 className={`space-y-2 transform transition-all duration-700 delay-200 ${mounted ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4"}`}
               >
                 <Label
-                  htmlFor="email"
+                  htmlFor="employeecode"
                   className="text-white/80 text-sm font-medium"
                 >
-                  Email Address
+                  Employee Code
                 </Label>
                 <div className="relative group">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-400/60 group-focus-within:text-blue-400 transition-colors" />
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="demo@example.com"
-                    value={email}
+                    id="employeecode"
+                    type="text"
+                    placeholder="Enter your employee code"
+                    value={employeecode}
                     onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (errors.email) setErrors({ ...errors, email: "" });
+                      setEmployeecode(e.target.value);
+                      if (errors.employeecode)
+                        setErrors({ ...errors, employeecode: "" });
                     }}
                     disabled={isLoading}
                     className={`pl-12 bg-white/5 border transition-all duration-300 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-blue-400 outline-none ${
-                      errors.email
+                      errors.employeecode
                         ? "border-red-500/70 focus:border-red-500"
                         : "border-white/20 hover:border-white/30"
                     }`}
                   />
                 </div>
-                {errors.email && (
+                {errors.employeecode && (
                   <p className="text-red-400 text-sm animate-fadeIn">
-                    {errors.email}
+                    {errors.employeecode}
                   </p>
                 )}
               </div>

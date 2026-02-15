@@ -186,14 +186,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (selectedEquipment.type !== request.equipmentType) {
+    if (
+      selectedEquipment.type !==
+      (request.equipmentType || request.equipment_type)
+    ) {
       toast.error("Selected equipment type does not match request");
       return;
     }
 
     const originCenter = getZoneCenter(
-      request.origin.floor,
-      request.origin.zone,
+      request.origin?.floor || 1,
+      request.origin?.zone || "",
     );
 
     setRequests((prevRequests) =>
@@ -219,8 +222,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
               assignedEquipment: [...(s.assignedEquipment || []), equipmentId],
               location: {
                 ...s.location,
-                floor: request.origin.floor,
-                zone: request.origin.zone,
+                floor: request.origin?.floor || s.location.floor,
+                zone: request.origin?.zone || s.location.zone,
                 x: originCenter?.x ?? s.location.x,
                 y: originCenter?.y ?? s.location.y,
               },
@@ -239,8 +242,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
               currentRequest: requestId,
               location: {
                 ...eq.location,
-                floor: request.origin.floor,
-                zone: request.origin.zone,
+                floor: request.origin?.floor || eq.location.floor,
+                zone: request.origin?.zone || eq.location.zone,
                 x: originCenter?.x ?? eq.location.x,
                 y: originCenter?.y ?? eq.location.y,
               },
@@ -408,7 +411,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUser(null);
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-
   };
 
   return (

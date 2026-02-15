@@ -90,16 +90,41 @@ export function RequestQueue({
 
   // Sort requests by priority and time
   const sortedRequests = [...requests].sort((a, b) => {
-    const priorityOrder = { emergency: 0, urgent: 1, routine: 2 };
-    if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
+    // Handle priority - can be string or number
+    const priorityOrder: any = {
+      emergency: 0,
+      urgent: 1,
+      routine: 2,
+      1: 0,
+      2: 1,
+      3: 2,
+      4: 3,
+    };
+    const aPriority = priorityOrder[a.priority] ?? 99;
+    const bPriority = priorityOrder[b.priority] ?? 99;
+
+    if (aPriority !== bPriority) {
+      return aPriority - bPriority;
     }
-    return a.requestedAt.getTime() - b.requestedAt.getTime();
+
+    // Handle timestamps - may be Date, string, or undefined
+    const aTime = a.requestedAt
+      ? a.requestedAt instanceof Date
+        ? a.requestedAt.getTime()
+        : new Date(a.requestedAt).getTime()
+      : 0;
+    const bTime = b.requestedAt
+      ? b.requestedAt instanceof Date
+        ? b.requestedAt.getTime()
+        : new Date(b.requestedAt).getTime()
+      : 0;
+
+    return aTime - bTime;
   });
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
   const inProgressCount = requests.filter(
-    (r) => r.status === "in-progress",
+    (r) => r.status === "in_progress" || r.status === "in-progress",
   ).length;
 
   return (
@@ -136,10 +161,10 @@ export function RequestQueue({
           <div className="p-4 grid gap-3">
             {sortedRequests.map((request) => (
               <div
-                key={request.id}
+                key={request._id || request.id}
                 className={cn(
                   "rounded-xl border bg-white shadow-sm transition-shadow hover:shadow-md",
-                  selectedRequestId === request.id &&
+                  selectedRequestId === (request._id || request.id) &&
                     "ring-2 ring-slate-900/10",
                 )}
                 onClick={() => onRequestSelect(request)}
@@ -158,12 +183,15 @@ export function RequestQueue({
                       <div className="flex items-center justify-between gap-3">
                         <div className="min-w-0">
                           <div className="text-sm font-semibold text-slate-900 truncate">
-                            {request.patientInfo.name}
+                            {request.patient_name ||
+                              request.patientInfo?.name ||
+                              "Unknown Patient"}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {request.patientInfo.id} • Room{" "}
-                            {request.patientInfo.roomNumber}
-                            {request.patientInfo.age &&
+                            {request.patientInfo?.id}{" "}
+                            {request.patientInfo?.roomNumber &&
+                              `• Room ${request.patientInfo.roomNumber}`}
+                            {request.patientInfo?.age &&
                               ` • Age ${request.patientInfo.age}`}
                           </div>
                         </div>
@@ -194,37 +222,55 @@ export function RequestQueue({
                         <div className="flex items-center gap-2 rounded-md bg-slate-50 px-2 py-1">
                           <MapPin className="h-3.5 w-3.5 text-blue-600" />
                           <div className="truncate">
-                            {request.origin.zone} • Floor {request.origin.floor}
+                            {request.pickup_room_id ||
+                              (request.origin &&
+                                `${request.origin.zone} • Floor ${request.origin.floor}`) ||
+                              "Origin"}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 rounded-md bg-slate-50 px-2 py-1">
                           <MapPin className="h-3.5 w-3.5 text-green-600" />
                           <div className="truncate">
-                            {request.destination.zone} • Floor{" "}
-                            {request.destination.floor}
+                            {request.destination_room_id ||
+                              (request.destination &&
+                                `${request.destination.zone} • Floor ${request.destination.floor}`) ||
+                              "Destination"}
                           </div>
                         </div>
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
                         <div className="flex items-center gap-2">
-                          <User className="h-3.5 w-3.5" />
-                          <span>{request.requestedBy}</span>
-                          <span className="text-slate-300">•</span>
-                          <Clock className="h-3.5 w-3.5" />
-                          <span>
-                            {request.requestedAt.toLocaleTimeString()}
-                          </span>
+                          {request.requestedBy && (
+                            <>
+                              <User className="h-3.5 w-3.5" />
+                              <span>{request.requestedBy}</span>
+                              <span className="text-slate-300">•</span>
+                            </>
+                          )}
+                          {request.requestedAt && (
+                            <>
+                              <Clock className="h-3.5 w-3.5" />
+                              <span>
+                                {request.requestedAt instanceof Date
+                                  ? request.requestedAt.toLocaleTimeString()
+                                  : new Date(
+                                      request.requestedAt,
+                                    ).toLocaleTimeString()}
+                              </span>
+                            </>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="flex items-center gap-1 rounded-full border px-2 py-0.5 bg-white">
-                            {request.equipmentType === "stretcher" ? (
+                            {(request.equipment_type ||
+                              request.equipmentType) === "stretcher" ? (
                               <Bed className="h-3.5 w-3.5" />
                             ) : (
                               <Accessibility className="h-3.5 w-3.5" />
                             )}
                             <span className="capitalize">
-                              {request.equipmentType}
+                              {request.equipment_type || request.equipmentType}
                             </span>
                           </div>
                           {request.estimatedDuration && (
@@ -249,7 +295,8 @@ export function RequestQueue({
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-blue-600" />
                             <span>
-                              Assigned to Staff ID: {request.assignedStaff}
+                              Assigned to Staff ID:{" "}
+                              {request.porter_id || request.assignedStaff}
                             </span>
                           </div>
                         </div>
@@ -274,7 +321,7 @@ export function RequestQueue({
                             className="flex-1"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onCancelRequest?.(request.id);
+                              onCancelRequest?.(request._id || request.id);
                             }}
                           >
                             <XCircle className="h-3.5 w-3.5 mr-1.5" />
