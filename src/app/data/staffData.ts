@@ -15,18 +15,18 @@ export const staffData: StaffMember[] = [
         currentWorkload: 0,
         completedToday: 0,
     },
-    {
-        id: "STAFF-2",
-        name: "Jane Smith",
-        role: "Patient Transport",
-        status: "busy",
-        location: {
-            x: 400,
-            y: 300,
-            floor: 2,
-            zone: "Surgery",
-        },
-        currentWorkload: 2,
-        completedToday: 5,
-    }
+    // {
+    //     id: "STAFF-2",
+    //     name: "Jane Smith",
+    //     role: "Patient Transport",
+    //     status: "busy",
+    //     location: {
+    //         x: 400,
+    //         y: 300,
+    //         floor: 2,
+    //         zone: "Surgery",
+    //     },
+    //     currentWorkload: 2,
+    //     completedToday: 5,
+    // }
 ];
