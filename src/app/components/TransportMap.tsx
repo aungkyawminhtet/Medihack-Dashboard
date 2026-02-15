@@ -113,14 +113,32 @@ export function TransportMap({
   const floorZones = currentFloorConfig?.zones.filter((z) => z.bounds) || [];
 
   return (
-    <div className="relative w-full h-full bg-gray-50 rounded-lg overflow-hidden border">
+    <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-200 bg-white">
+      <div
+        className="absolute inset-0 opacity-60 pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, rgba(148,163,184,0.35) 1px, transparent 1px), linear-gradient(to bottom, rgba(148,163,184,0.35) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      />
+      <div
+        className="absolute inset-0 opacity-30 pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(135deg, rgba(100,116,139,0.18) 1px, transparent 1px)",
+          backgroundSize: "56px 56px",
+        }}
+      />
+      <div className="absolute -top-48 -right-48 h-96 w-96 rounded-full bg-sky-100 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-48 -left-48 h-96 w-96 rounded-full bg-indigo-100 blur-3xl pointer-events-none" />
       {/* Controls */}
       <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
         <Button
           size="icon"
           variant="secondary"
           onClick={handleZoomIn}
-          className="shadow-lg"
+          className="shadow-lg bg-white/90 text-slate-900 border border-slate-200 hover:bg-white"
         >
           <ZoomIn className="h-4 w-4" />
         </Button>
@@ -128,7 +146,7 @@ export function TransportMap({
           size="icon"
           variant="secondary"
           onClick={handleZoomOut}
-          className="shadow-lg"
+          className="shadow-lg bg-white/90 text-slate-900 border border-slate-200 hover:bg-white"
         >
           <ZoomOut className="h-4 w-4" />
         </Button>
@@ -136,7 +154,7 @@ export function TransportMap({
 
       {/* Floor Indicator */}
       <div className="absolute top-4 left-4 z-10">
-        <Card className="shadow-lg">
+        <Card className="shadow-lg bg-white/90 text-slate-900 backdrop-blur border border-slate-200">
           <CardHeader className="p-3 pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Layers className="h-4 w-4" />
@@ -144,7 +162,7 @@ export function TransportMap({
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-slate-600">
               {filteredEquipment.length} Equipment • {filteredStaff.length}{" "}
               Staff
             </div>
@@ -154,7 +172,7 @@ export function TransportMap({
 
       {/* Legend */}
       <div className="absolute bottom-4 left-4 z-10">
-        <Card className="shadow-lg">
+        <Card className="shadow-lg bg-white/90 text-slate-900 backdrop-blur border border-slate-200">
           <CardHeader className="p-3 pb-2">
             <CardTitle className="text-xs">Status Legend</CardTitle>
           </CardHeader>
@@ -181,7 +199,7 @@ export function TransportMap({
 
       {/* Access Points Toggle */}
       <div className="absolute bottom-4 right-4 z-10">
-        <Card className="shadow-lg">
+        <Card className="shadow-lg bg-white/90 text-slate-900 backdrop-blur border border-slate-200">
           <CardHeader className="p-3 pb-2">
             <CardTitle className="text-xs">Access Points</CardTitle>
           </CardHeader>
@@ -210,35 +228,38 @@ export function TransportMap({
       >
         <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
           {/* Hospital Zones */}
-          {floorZones.map(
-            (zone) =>
-              zone.bounds && (
-                <g key={zone.id}>
-                  <rect
-                    x={zone.bounds.x}
-                    y={zone.bounds.y}
-                    width={zone.bounds.width}
-                    height={zone.bounds.height}
-                    fill={zone.color}
-                    fillOpacity={0.1}
-                    stroke={zone.color}
-                    strokeWidth={2}
-                    strokeDasharray="5,5"
-                    rx={8}
-                  />
-                  <text
-                    x={zone.bounds.x + zone.bounds.width / 2}
-                    y={zone.bounds.y + 20}
-                    textAnchor="middle"
-                    fill={zone.color}
-                    fontSize="14"
-                    fontWeight="600"
-                  >
-                    {zone.name}
-                  </text>
-                </g>
-              ),
-          )}
+          {floorZones.map((zone) => {
+            if (!zone.bounds) return null;
+
+            return (
+              <g key={zone.id}>
+                <rect
+                  x={zone.bounds.x}
+                  y={zone.bounds.y}
+                  width={zone.bounds.width}
+                  height={zone.bounds.height}
+                  fill={zone.color}
+                  fillOpacity={0.05}
+                  stroke={zone.color}
+                  strokeWidth={2}
+                  strokeDasharray="6,6"
+                  strokeOpacity={0.55}
+                  rx={6}
+                />
+                <text
+                  x={zone.bounds.x + zone.bounds.width / 2}
+                  y={zone.bounds.y + 18}
+                  textAnchor="middle"
+                  fill="#1f2937"
+                  fontSize="13"
+                  fontWeight="600"
+                  letterSpacing="0.4"
+                >
+                  {zone.name}
+                </text>
+              </g>
+            );
+          })}
 
           {/* Access Points and BLE Coverage */}
           {showAccessPoints &&
@@ -350,7 +371,7 @@ export function TransportMap({
                     <text
                       y={25}
                       textAnchor="middle"
-                      fill="#374151"
+                      fill="#1f2937"
                       fontSize="9"
                       fontWeight="500"
                     >
@@ -451,7 +472,7 @@ export function TransportMap({
               <text
                 y={35}
                 textAnchor="middle"
-                fill="#374151"
+                fill="#1f2937"
                 fontSize="10"
                 fontWeight="500"
               >

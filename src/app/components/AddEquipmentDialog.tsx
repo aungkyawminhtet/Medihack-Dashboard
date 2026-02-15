@@ -1,32 +1,54 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { TransportEquipment, EquipmentType, EquipmentStatus } from '../types/transport';
-import { Bed, Accessibility } from 'lucide-react';
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import {
+  TransportEquipment,
+  EquipmentType,
+  EquipmentStatus,
+} from "../types/transport";
+import { Bed, Accessibility } from "lucide-react";
 
 interface AddEquipmentDialogProps {
   open: boolean;
   onClose: () => void;
-  onAddEquipment: (equipment: Omit<TransportEquipment, 'id'>) => void;
+  onAddEquipment: (equipment: Omit<TransportEquipment, "id">) => void;
 }
 
-export function AddEquipmentDialog({ open, onClose, onAddEquipment }: AddEquipmentDialogProps) {
+export function AddEquipmentDialog({
+  open,
+  onClose,
+  onAddEquipment,
+}: AddEquipmentDialogProps) {
   const [formData, setFormData] = useState({
-    type: 'stretcher' as EquipmentType,
-    status: 'available' as EquipmentStatus,
+    type: "stretcher" as EquipmentType,
+    status: "available" as EquipmentStatus,
     floor: 1,
-    zone: 'Emergency',
+    zone: "Emergency",
     batteryLevel: 100,
-    maintenanceNote: '',
+    maintenanceNote: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const newEquipment: Omit<TransportEquipment, 'id'> = {
+
+    const newEquipment: any = {
+      name: `${formData.type.charAt(0).toUpperCase() + formData.type.slice(1)} - ${new Date().getTime()}`,
       type: formData.type,
       status: formData.status,
       location: {
@@ -36,34 +58,38 @@ export function AddEquipmentDialog({ open, onClose, onAddEquipment }: AddEquipme
         y: Math.random() * 500 + 100,
       },
       batteryLevel: formData.batteryLevel,
-      assignedStaff: null,
-      currentRequest: null,
+      assignedStaff: undefined,
+      currentRequest: undefined,
       lastUsed: new Date().toISOString(),
+      lastMaintenance:
+        formData.status === "maintenance"
+          ? new Date().toISOString()
+          : undefined,
       maintenanceNote: formData.maintenanceNote || undefined,
     };
 
     onAddEquipment(newEquipment);
-    
+
     // Reset form
     setFormData({
-      type: 'stretcher',
-      status: 'available',
+      type: "stretcher",
+      status: "available",
       floor: 1,
-      zone: 'Emergency',
+      zone: "Emergency",
       batteryLevel: 100,
-      maintenanceNote: '',
+      maintenanceNote: "",
     });
   };
 
   const zones = [
-    'Emergency',
-    'ICU',
-    'Surgery',
-    'Radiology',
-    'General Ward',
-    'Pediatrics',
-    'Maternity',
-    'Outpatient',
+    "Emergency",
+    "ICU",
+    "Surgery",
+    "Radiology",
+    "General Ward",
+    "Pediatrics",
+    "Maternity",
+    "Outpatient",
   ];
 
   return (
@@ -84,18 +110,26 @@ export function AddEquipmentDialog({ open, onClose, onAddEquipment }: AddEquipme
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   type="button"
-                  variant={formData.type === 'stretcher' ? 'default' : 'outline'}
+                  variant={
+                    formData.type === "stretcher" ? "default" : "outline"
+                  }
                   className="flex-1"
-                  onClick={() => setFormData({ ...formData, type: 'stretcher' })}
+                  onClick={() =>
+                    setFormData({ ...formData, type: "stretcher" })
+                  }
                 >
                   <Bed className="h-4 w-4 mr-2" />
                   Stretcher
                 </Button>
                 <Button
                   type="button"
-                  variant={formData.type === 'wheelchair' ? 'default' : 'outline'}
+                  variant={
+                    formData.type === "wheelchair" ? "default" : "outline"
+                  }
                   className="flex-1"
-                  onClick={() => setFormData({ ...formData, type: 'wheelchair' })}
+                  onClick={() =>
+                    setFormData({ ...formData, type: "wheelchair" })
+                  }
                 >
                   <Accessibility className="h-4 w-4 mr-2" />
                   Wheelchair
@@ -108,7 +142,7 @@ export function AddEquipmentDialog({ open, onClose, onAddEquipment }: AddEquipme
               <Label htmlFor="status">Status</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value: EquipmentStatus) => 
+                onValueChange={(value: EquipmentStatus) =>
                   setFormData({ ...formData, status: value })
                 }
               >
@@ -129,7 +163,7 @@ export function AddEquipmentDialog({ open, onClose, onAddEquipment }: AddEquipme
               <Label htmlFor="floor">Floor</Label>
               <Select
                 value={formData.floor.toString()}
-                onValueChange={(value) => 
+                onValueChange={(value) =>
                   setFormData({ ...formData, floor: parseInt(value) })
                 }
               >
@@ -149,7 +183,7 @@ export function AddEquipmentDialog({ open, onClose, onAddEquipment }: AddEquipme
               <Label htmlFor="zone">Zone</Label>
               <Select
                 value={formData.zone}
-                onValueChange={(value) => 
+                onValueChange={(value) =>
                   setFormData({ ...formData, zone: value })
                 }
               >
@@ -176,13 +210,16 @@ export function AddEquipmentDialog({ open, onClose, onAddEquipment }: AddEquipme
                 max="100"
                 value={formData.batteryLevel}
                 onChange={(e) =>
-                  setFormData({ ...formData, batteryLevel: parseInt(e.target.value) })
+                  setFormData({
+                    ...formData,
+                    batteryLevel: parseInt(e.target.value),
+                  })
                 }
               />
             </div>
 
             {/* Maintenance Note (conditional) */}
-            {formData.status === 'maintenance' && (
+            {formData.status === "maintenance" && (
               <div className="space-y-2">
                 <Label htmlFor="maintenanceNote">Maintenance Note</Label>
                 <Input
@@ -190,7 +227,10 @@ export function AddEquipmentDialog({ open, onClose, onAddEquipment }: AddEquipme
                   placeholder="Describe the maintenance issue..."
                   value={formData.maintenanceNote}
                   onChange={(e) =>
-                    setFormData({ ...formData, maintenanceNote: e.target.value })
+                    setFormData({
+                      ...formData,
+                      maintenanceNote: e.target.value,
+                    })
                   }
                 />
               </div>

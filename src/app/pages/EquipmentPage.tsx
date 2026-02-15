@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { AppHeader } from "../components/AppHeader";
 import { AddEquipmentDialog } from "../components/AddEquipmentDialog";
 import {
@@ -61,6 +61,7 @@ type EquipmentFilter =
 export default function EquipmentPage() {
   const {
     equipment,
+    floorConfig,
     handleAddEquipment,
     handleUpdateEquipment,
     handleDeleteEquipment,
@@ -149,16 +150,45 @@ export default function EquipmentPage() {
     }
   }, [filterMode]);
 
-  const zones = [
-    "Emergency",
-    "ICU",
-    "Surgery",
-    "Radiology",
-    "General Ward",
-    "Pediatrics",
-    "Maternity",
-    "Outpatient",
-  ];
+  const enabledFloors = useMemo(
+    () => floorConfig.filter((floor) => floor.enabled),
+    [floorConfig],
+  );
+
+  const zonesByFloor = useMemo(() => {
+    const map = new Map<number, string[]>();
+    enabledFloors.forEach((floor) => {
+      map.set(
+        floor.number,
+        floor.zones.map((zone) => zone.name),
+      );
+    });
+    return map;
+  }, [enabledFloors]);
+
+  const editZones = useMemo(
+    () => zonesByFloor.get(editForm.floor) ?? [],
+    [zonesByFloor, editForm.floor],
+  );
+
+  const assignZones = useMemo(
+    () => zonesByFloor.get(assignForm.floor) ?? [],
+    [zonesByFloor, assignForm.floor],
+  );
+
+  useEffect(() => {
+    if (!editZones.length) return;
+    if (!editZones.includes(editForm.zone)) {
+      setEditForm((prev) => ({ ...prev, zone: editZones[0] }));
+    }
+  }, [editZones, editForm.zone]);
+
+  useEffect(() => {
+    if (!assignZones.length) return;
+    if (!assignZones.includes(assignForm.zone)) {
+      setAssignForm((prev) => ({ ...prev, zone: assignZones[0] }));
+    }
+  }, [assignZones, assignForm.zone]);
 
   const openEditDialog = (eq: TransportEquipment) => {
     setEditTarget(eq);
@@ -228,7 +258,7 @@ export default function EquipmentPage() {
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50">
       <AppHeader />
 
-      <div className="flex-1 flex flex-col overflow-hidden p-6">
+      <div className="flex-1 flex flex-col overflow-hidden p-6 animate-fadeInUpSlow">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold mb-2">
@@ -353,7 +383,7 @@ export default function EquipmentPage() {
 
         {/* Equipment List */}
         <div className="flex-1 bg-white rounded-lg border p-4 overflow-hidden">
-          <div className="h-full min-h-0 flex flex-col animate-fade-slide">
+          <div className="h-full min-h-0 flex flex-col">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-semibold">{filterLabel}</h3>
@@ -567,9 +597,14 @@ export default function EquipmentPage() {
                       <SelectValue placeholder="Select floor" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Floor 1</SelectItem>
-                      <SelectItem value="2">Floor 2</SelectItem>
-                      <SelectItem value="3">Floor 3</SelectItem>
+                      {enabledFloors.map((floor) => (
+                        <SelectItem
+                          key={floor.id}
+                          value={floor.number.toString()}
+                        >
+                          {floor.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -585,7 +620,7 @@ export default function EquipmentPage() {
                       <SelectValue placeholder="Select zone" />
                     </SelectTrigger>
                     <SelectContent>
-                      {zones.map((zone) => (
+                      {editZones.map((zone) => (
                         <SelectItem key={zone} value={zone}>
                           {zone}
                         </SelectItem>
@@ -694,9 +729,14 @@ export default function EquipmentPage() {
                     <SelectValue placeholder="Select floor" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Floor 1</SelectItem>
-                    <SelectItem value="2">Floor 2</SelectItem>
-                    <SelectItem value="3">Floor 3</SelectItem>
+                    {enabledFloors.map((floor) => (
+                      <SelectItem
+                        key={floor.id}
+                        value={floor.number.toString()}
+                      >
+                        {floor.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -712,7 +752,7 @@ export default function EquipmentPage() {
                     <SelectValue placeholder="Select zone" />
                   </SelectTrigger>
                   <SelectContent>
-                    {zones.map((zone) => (
+                    {assignZones.map((zone) => (
                       <SelectItem key={zone} value={zone}>
                         {zone}
                       </SelectItem>
@@ -734,23 +774,6 @@ export default function EquipmentPage() {
           </form>
         </DialogContent>
       </Dialog>
-
-      <style>{`
-        @keyframes fade-slide {
-          from {
-            opacity: 0;
-            transform: translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fade-slide {
-          animation: fade-slide 240ms ease-out;
-        }
-      `}</style>
     </div>
   );
 }

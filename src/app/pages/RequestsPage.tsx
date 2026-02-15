@@ -131,7 +131,7 @@ export default function RequestsPage() {
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50">
       <AppHeader />
 
-      <div className="flex-1 flex flex-col overflow-hidden p-6">
+      <div className="flex-1 flex flex-col overflow-hidden p-6 animate-fadeInUpSlow">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold mb-2">Transport Requests</h2>
@@ -204,7 +204,7 @@ export default function RequestsPage() {
         </div>
 
         {/* Request Queue */}
-        <div className="flex-1 bg-white rounded-lg border p-4 overflow-hidden">
+        <div className="flex-1 bg-white rounded-lg border overflow-y-auto">
           <RequestQueue
             requests={requests}
             onRequestSelect={(req) => setSelectedRequestId(req.id)}
@@ -225,7 +225,7 @@ export default function RequestsPage() {
       />
 
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
-        <DialogContent className="sm:max-w-[500px] animate-dialog-slide">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Assign Request</DialogTitle>
             <DialogDescription>
@@ -268,7 +268,7 @@ export default function RequestsPage() {
 
               {/* Patient Info */}
               {assignTarget && (
-                <div className="bg-gray-50 p-3 rounded-lg border animate-fade-slide">
+                <div className="bg-gray-50 p-3 rounded-lg border">
                   <div className="text-sm font-medium mb-1">
                     Patient: {assignTarget.patientInfo.name}
                   </div>
@@ -370,38 +370,6 @@ export default function RequestsPage() {
           </form>
         </DialogContent>
       </Dialog>
-
-      <style>{`
-        @keyframes fade-slide {
-          from {
-            opacity: 0;
-            transform: translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes dialog-slide {
-          from {
-            opacity: 0;
-            transform: scale(0.95) translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
-
-        .animate-fade-slide {
-          animation: fade-slide 300ms ease-out;
-        }
-
-        .animate-dialog-slide {
-          animation: dialog-slide 250ms ease-out;
-        }
-      `}</style>
     </div>
   );
 }

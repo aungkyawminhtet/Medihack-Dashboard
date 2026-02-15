@@ -85,10 +85,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   // Auth state
-  const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
 
   const [equipment, setEquipment] =
     useState<TransportEquipment[]>(equipmentData);
@@ -154,6 +151,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, []);
 
+  const getZoneCenter = (floor: number, zoneName: string) => {
+    const floorData = floorConfig.find((f) => f.number === floor);
+    const zone = floorData?.zones.find((z) => z.name === zoneName);
+    if (!zone?.bounds) return null;
+
+    return {
+      x: zone.bounds.x + zone.bounds.width / 2,
+      y: zone.bounds.y + zone.bounds.height / 2,
+    };
+  };
+
   const handleAssignRequest = (
     requestId: string,
     staffId: string,
@@ -183,6 +191,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const originCenter = getZoneCenter(
+      request.origin.floor,
+      request.origin.zone,
+    );
+
     setRequests((prevRequests) =>
       prevRequests.map((r) =>
         r.id === requestId
@@ -204,6 +217,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
               status: "busy" as const,
               currentWorkload: s.currentWorkload + 1,
               assignedEquipment: [...(s.assignedEquipment || []), equipmentId],
+              location: {
+                ...s.location,
+                floor: request.origin.floor,
+                zone: request.origin.zone,
+                x: originCenter?.x ?? s.location.x,
+                y: originCenter?.y ?? s.location.y,
+              },
             }
           : s,
       ),
@@ -217,6 +237,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
               status: "in-use" as const,
               assignedStaff: staffId,
               currentRequest: requestId,
+              location: {
+                ...eq.location,
+                floor: request.origin.floor,
+                zone: request.origin.zone,
+                x: originCenter?.x ?? eq.location.x,
+                y: originCenter?.y ?? eq.location.y,
+              },
             }
           : eq,
       ),
@@ -286,6 +313,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     floor: number,
     zone: string,
   ) => {
+    const zoneCenter = getZoneCenter(floor, zone);
     setEquipment((prevEquipment) =>
       prevEquipment.map((eq) =>
         eq.id === equipmentId
@@ -295,6 +323,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 ...eq.location,
                 floor,
                 zone,
+                x: zoneCenter?.x ?? eq.location.x,
+                y: zoneCenter?.y ?? eq.location.y,
               },
             }
           : eq,
@@ -377,13 +407,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
+
   };
 
   return (
     <AppContext.Provider
       value={{
         user,
-        isLoggedIn: user !== null,
+        isLoggedIn: user !== null && localStorage.getItem("token") !== null,
         login,
         logout,
         equipment,

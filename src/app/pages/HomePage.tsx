@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Plus, Building2, Layers, Bed, Bell, Users } from "lucide-react";
+import { Layers, Bed, Bell, Users } from "lucide-react";
 import { useApp } from "../context/AppContext";
 
 export default function HomePage() {
@@ -75,7 +75,7 @@ export default function HomePage() {
       <AppHeader onNewRequest={() => setShowNewRequestDialog(true)} />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden p-6">
+      <div className="flex-1 flex flex-col overflow-hidden p-6 animate-fadeInUpSlow">
         {/* Dashboard Stats */}
         <div className="grid grid-cols-1 gap-3 mb-4 md:grid-cols-3">
           <Card className="border border-green-100 bg-green-50/60 hover:shadow-md transition-all duration-300">
@@ -160,15 +160,6 @@ export default function HomePage() {
                 )}
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/floors")}
-              className="hover:bg-purple-50 hover:scale-105 transition-all duration-300"
-            >
-              <Building2 className="h-4 w-4 mr-2" />
-              Manage Floors
-            </Button>
           </div>
         </div>
 
@@ -198,70 +189,6 @@ export default function HomePage() {
                 floorConfig={floorConfig}
               />
             </div>
-
-            <Card className="shadow-sm hover:shadow-md border border-gray-200 transition-all duration-300 hover:scale-105">
-              <CardHeader>
-                <CardTitle className="text-sm">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full hover:bg-blue-50 hover:scale-105 transition-all duration-300"
-                  onClick={() => setShowAddAccessPointDialog(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Access Point
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full hover:bg-green-50 hover:scale-105 transition-all duration-300"
-                  onClick={() => setShowAddEquipmentDialog(true)}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Equipment
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full hover:bg-purple-50 hover:scale-105 transition-all duration-300"
-                  onClick={() => navigate("/floors")}
-                >
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Manage Zones
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm hover:shadow-md border border-gray-200 transition-all duration-300 hover:scale-105">
-              <CardHeader>
-                <CardTitle className="text-sm">Map Guide</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Click on any marker to view details:
-                </p>
-                <div className="space-y-1 text-xs">
-                  <div className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors">
-                    <div className="w-3 h-3 rounded-full bg-green-500 shadow-md" />
-                    <span>Available Equipment/Staff</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors">
-                    <div className="w-3 h-3 rounded-full bg-blue-500 shadow-md" />
-                    <span>In Use / Access Points</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors">
-                    <div className="w-3 h-3 rounded-full bg-orange-500 shadow-md" />
-                    <span>Requested/Busy</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors">
-                    <div className="w-3 h-3 rounded-full bg-red-500 shadow-md" />
-                    <span>Maintenance</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>
@@ -294,38 +221,6 @@ export default function HomePage() {
         }}
         floorConfigs={floorConfig}
       />
-
-      <style>{`
-        @keyframes slideInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        .animate-slideInUp {
-          animation: slideInUp 0.6s ease-out forwards;
-        }
-
-        .animate-slideInRight {
-          animation: slideInRight 0.6s ease-out forwards;
-        }
-      `}</style>
     </div>
   );
 }

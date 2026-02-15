@@ -1,36 +1,157 @@
-import { FloorConfig, DEFAULT_ZONES } from '../types/floor-config';
-
-// Helper to create unique zones for each floor
-const createFloorZones = (floorNumber: number) => {
-  return DEFAULT_ZONES.map(zone => ({
-    ...zone,
-    id: `${zone.id}-floor-${floorNumber}`
-  }));
-};
+import { FloorConfig } from "../types/floor-config";
 
 export const DEFAULT_FLOOR_CONFIG: FloorConfig[] = [
   {
-    id: 'floor-1',
+    id: "ground-floor",
     number: 1,
-    name: 'Ground Floor',
-    zones: createFloorZones(1),
-    dimensions: { width: 1000, height: 600 },
+    name: "Ground Floor",
     enabled: true,
+    dimensions: { width: 1000, height: 600 },
+    zones: [
+      {
+        id: "emergency-gf",
+        name: "Emergency",
+        color: "#ef4444",
+        capacity: 10,
+        bounds: { x: 50, y: 100, width: 300, height: 200 },
+      },
+      {
+        id: "outpatient-gf",
+        name: "Outpatient",
+        color: "#6366f1",
+        capacity: 12,
+        bounds: { x: 50, y: 400, width: 200, height: 100 },
+      },
+      {
+        id: "general-gf",
+        name: "General Ward",
+        color: "#10b981",
+        capacity: 15,
+        bounds: { x: 400, y: 150, width: 250, height: 200 },
+      },
+      {
+        id: "radiology-gf",
+        name: "Radiology",
+        color: "#06b6d4",
+        capacity: 5,
+        bounds: { x: 700, y: 350, width: 200, height: 150 },
+      },
+      {
+        id: "pharmacy-gf",
+        name: "Pharmacy",
+        color: "#8b5cf6",
+        capacity: 6,
+        bounds: { x: 350, y: 400, width: 200, height: 100 },
+      },
+      {
+        id: "cafeteria-gf",
+        name: "Cafeteria",
+        color: "#f97316",
+        capacity: 20,
+        bounds: { x: 650, y: 420, width: 250, height: 130 },
+      },
+    ],
   },
   {
-    id: 'floor-2',
+    id: "first-floor",
     number: 2,
-    name: 'First Floor',
-    zones: createFloorZones(2),
-    dimensions: { width: 1000, height: 600 },
+    name: "First Floor",
     enabled: true,
+    dimensions: { width: 1000, height: 600 },
+    zones: [
+      {
+        id: "icu-1f",
+        name: "ICU",
+        color: "#f59e0b",
+        capacity: 8,
+        bounds: { x: 50, y: 100, width: 250, height: 150 },
+      },
+      {
+        id: "surgery-1f",
+        name: "Surgery",
+        color: "#8b5cf6",
+        capacity: 6,
+        bounds: { x: 350, y: 100, width: 250, height: 200 },
+      },
+      {
+        id: "hematology-1f",
+        name: "Hematology",
+        color: "#ec4899",
+        capacity: 8,
+        bounds: { x: 650, y: 150, width: 200, height: 150 },
+      },
+      {
+        id: "diagnostics-1f",
+        name: "Diagnostics",
+        color: "#f97316",
+        capacity: 10,
+        bounds: { x: 200, y: 400, width: 250, height: 150 },
+      },
+      {
+        id: "pathology-1f",
+        name: "Pathology",
+        color: "#06b6d4",
+        capacity: 7,
+        bounds: { x: 50, y: 350, width: 200, height: 120 },
+      },
+      {
+        id: "laboratory-1f",
+        name: "Laboratory",
+        color: "#10b981",
+        capacity: 9,
+        bounds: { x: 700, y: 400, width: 200, height: 120 },
+      },
+    ],
   },
   {
-    id: 'floor-3',
+    id: "second-floor",
     number: 3,
-    name: 'Second Floor',
-    zones: createFloorZones(3),
-    dimensions: { width: 1000, height: 600 },
+    name: "Second Floor",
     enabled: true,
+    dimensions: { width: 1000, height: 600 },
+    zones: [
+      {
+        id: "pediatrics-2f",
+        name: "Pediatrics",
+        color: "#ec4899",
+        capacity: 8,
+        bounds: { x: 50, y: 150, width: 200, height: 150 },
+      },
+      {
+        id: "maternity-2f",
+        name: "Maternity",
+        color: "#f97316",
+        capacity: 10,
+        bounds: { x: 300, y: 100, width: 250, height: 200 },
+      },
+      {
+        id: "nicu-2f",
+        name: "NICU",
+        color: "#a78bfa",
+        capacity: 6,
+        bounds: { x: 650, y: 150, width: 200, height: 150 },
+      },
+      {
+        id: "postpartum-2f",
+        name: "Postpartum",
+        color: "#fbbf24",
+        capacity: 10,
+        bounds: { x: 200, y: 400, width: 250, height: 150 },
+      },
+      {
+        id: "nursery-2f",
+        name: "Nursery",
+        color: "#f472b6",
+        capacity: 12,
+        bounds: { x: 50, y: 380, width: 180, height: 140 },
+      },
+      {
+        id: "recovery-2f",
+        name: "Recovery",
+        color: "#22d3ee",
+        capacity: 8,
+        bounds: { x: 700, y: 370, width: 200, height: 130 },
+      },
+    ],
   },
 ];

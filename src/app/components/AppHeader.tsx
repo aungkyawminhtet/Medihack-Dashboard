@@ -37,7 +37,7 @@ export function AppHeader({ onNewRequest }: { onNewRequest?: () => void }) {
     <header className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 bg-[conic-gradient(at_30%_30%,#1d4ed8,#06b6d4,#10b981)] rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer">
+          <div className="w-11 h-11 bg-[conic-gradient(at_30%_30%,#1d4ed8,#06b6d4,#10b981)] rounded-xl flex items-center justify-center shadow-lg cursor-pointer">
             <Activity className="h-6 w-6 text-white" />
           </div>
           <div>
@@ -55,21 +55,21 @@ export function AppHeader({ onNewRequest }: { onNewRequest?: () => void }) {
             <Button
               variant="outline"
               size="icon"
-              className="hover:bg-blue-50 hover:scale-110 transition-all duration-300 hover:text-blue-600"
+              className="hover:bg-blue-50 hover:text-blue-600"
             >
               <Bell className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              className="hover:bg-purple-50 hover:scale-110 transition-all duration-300 hover:text-purple-600"
+              className="hover:bg-purple-50 hover:text-purple-600"
             >
               <Settings className="h-4 w-4" />
             </Button>
             {user && (
               <div className="flex items-center gap-2 pl-2 border-l border-gray-200">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-50 transition-all duration-300">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-all duration-300">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-50">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center shadow-md">
                     <User className="h-4 w-4 text-white" />
                   </div>
                   <div className="text-sm">
@@ -82,7 +82,7 @@ export function AppHeader({ onNewRequest }: { onNewRequest?: () => void }) {
                   size="icon"
                   onClick={handleLogout}
                   title="Logout"
-                  className="hover:bg-red-50 hover:scale-110 transition-all duration-300 hover:text-red-600"
+                  className="hover:bg-red-50 hover:text-red-600"
                 >
                   <LogOut className="h-4 w-4" />
                 </Button>
@@ -94,18 +94,17 @@ export function AppHeader({ onNewRequest }: { onNewRequest?: () => void }) {
 
       {/* Navigation */}
       <nav className="flex gap-2">
-        {navItems.map((item, index) => (
+        {navItems.map((item) => (
           <Button
             key={item.path}
             variant="ghost"
             size="sm"
             onClick={() => navigate(item.path)}
-            className={`flex items-center gap-2 rounded-none border-b-2 px-3 transition-all duration-300 ${
+            className={`flex items-center gap-2 rounded-none border-b-2 px-3 ${
               location.pathname === item.path
                 ? "border-blue-600 text-blue-700"
                 : "border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-900"
             }`}
-            style={{ animationDelay: `${index * 50}ms` } as React.CSSProperties}
           >
             <item.icon className="h-4 w-4" />
             {item.label}

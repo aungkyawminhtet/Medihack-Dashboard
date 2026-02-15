@@ -165,25 +165,9 @@ export default function StaffPage() {
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50">
       <AppHeader />
 
-      <div className="flex-1 flex flex-col overflow-hidden p-6">
+      <div className="flex-1 flex flex-col overflow-hidden p-6 animate-fadeInUpSlow">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <style>{`
-            @keyframes fade-slide {
-              from {
-                opacity: 0;
-                transform: translateY(8px);
-              }
-              to {
-                opacity: 1;
-                transform: translateY(0);
-              }
-            }
-
-            .animate-fade-slide {
-              animation: fade-slide 240ms ease-out;
-            }
-          `}</style>
             <h2 className="text-2xl font-semibold mb-2">Staff Management</h2>
             <p className="text-muted-foreground">
               Monitor staff workload and availability
@@ -296,7 +280,7 @@ export default function StaffPage() {
 
         {/* Staff Table */}
         <div className="flex-1 bg-white rounded-lg border p-4 overflow-hidden">
-          <div className="h-full min-h-0 flex flex-col animate-fade-slide">
+          <div className="h-full min-h-0 flex flex-col">
             <div className="mb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-semibold">{filterLabel}</h3>

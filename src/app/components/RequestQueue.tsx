@@ -4,7 +4,6 @@ import {
   RequestPriority,
   RequestStatus,
 } from "../types/transport";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
@@ -12,7 +11,6 @@ import {
   Clock,
   User,
   MapPin,
-  ArrowRight,
   AlertCircle,
   CheckCircle2,
   Bed,
@@ -35,48 +33,58 @@ export function RequestQueue({
   requests,
   onRequestSelect,
   selectedRequestId,
-  onAssignRequest,
   onOpenAssignDialog,
   onCancelRequest,
 }: RequestQueueProps) {
-  const getPriorityColor = (priority: RequestPriority) => {
+  const getPriorityDot = (priority: RequestPriority) => {
     switch (priority) {
       case "emergency":
-        return "bg-red-500 text-white hover:bg-red-600";
+        return "bg-red-500";
       case "urgent":
-        return "bg-orange-500 text-white hover:bg-orange-600";
+        return "bg-orange-500";
       case "routine":
-        return "bg-blue-500 text-white hover:bg-blue-600";
+        return "bg-blue-500";
     }
   };
 
-  const getStatusColor = (status: RequestStatus) => {
+  const getPriorityBadge = (priority: RequestPriority) => {
+    switch (priority) {
+      case "emergency":
+        return "bg-red-50 text-red-700 border-red-200";
+      case "urgent":
+        return "bg-orange-50 text-orange-700 border-orange-200";
+      case "routine":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+    }
+  };
+
+  const getStatusBadge = (status: RequestStatus) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-300";
+        return "bg-yellow-50 text-yellow-700 border-yellow-200";
       case "assigned":
-        return "bg-blue-100 text-blue-800 border-blue-300";
+        return "bg-blue-50 text-blue-700 border-blue-200";
       case "in-progress":
-        return "bg-purple-100 text-purple-800 border-purple-300";
+        return "bg-purple-50 text-purple-700 border-purple-200";
       case "completed":
-        return "bg-green-100 text-green-800 border-green-300";
+        return "bg-green-50 text-green-700 border-green-200";
       case "cancelled":
-        return "bg-gray-100 text-gray-800 border-gray-300";
+        return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
 
   const getStatusIcon = (status: RequestStatus) => {
     switch (status) {
       case "pending":
-        return <Clock className="h-3 w-3" />;
+        return <Clock className="h-3.5 w-3.5" />;
       case "assigned":
-        return <User className="h-3 w-3" />;
+        return <User className="h-3.5 w-3.5" />;
       case "in-progress":
-        return <Play className="h-3 w-3" />;
+        return <Play className="h-3.5 w-3.5" />;
       case "completed":
-        return <CheckCircle2 className="h-3 w-3" />;
+        return <CheckCircle2 className="h-3.5 w-3.5" />;
       case "cancelled":
-        return <XCircle className="h-3 w-3" />;
+        return <XCircle className="h-3.5 w-3.5" />;
     }
   };
 
@@ -95,189 +103,193 @@ export function RequestQueue({
   ).length;
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="border-b pb-4">
+    <div className="h-full flex flex-col">
+      <div className="px-4 py-3 border-b bg-gradient-to-r from-slate-50 to-white">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Transport Queue</CardTitle>
+          <div className="text-sm font-semibold tracking-wide text-slate-900">
+            Transport Queue
+          </div>
           <div className="flex items-center gap-2">
             <Badge
               variant="outline"
-              className="bg-yellow-50 text-yellow-700 border-yellow-300"
+              className="bg-yellow-50 text-yellow-700 border-yellow-200"
             >
               {pendingCount} Pending
             </Badge>
             <Badge
               variant="outline"
-              className="bg-purple-50 text-purple-700 border-purple-300"
+              className="bg-purple-50 text-purple-700 border-purple-200"
             >
               {inProgressCount} Active
             </Badge>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="flex-1 p-0 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div className="p-4 space-y-3">
-            {sortedRequests.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                <p>No transport requests</p>
-              </div>
-            ) : (
-              sortedRequests.map((request) => (
-                <Card
-                  key={request.id}
-                  className={cn(
-                    "cursor-pointer transition-all hover:shadow-md",
-                    selectedRequestId === request.id &&
-                      "ring-2 ring-blue-500 shadow-md",
-                  )}
-                  onClick={() => onRequestSelect(request)}
-                >
-                  <CardContent className="p-4">
-                    {/* Header */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Badge className={getPriorityColor(request.priority)}>
-                          {request.priority.toUpperCase()}
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            "flex items-center gap-1",
-                            getStatusColor(request.status),
-                          )}
-                        >
-                          {getStatusIcon(request.status)}
-                          {request.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        {request.equipmentType === "stretcher" ? (
-                          <Bed className="h-3 w-3" />
-                        ) : (
-                          <Accessibility className="h-3 w-3" />
-                        )}
-                        <span className="capitalize">
-                          {request.equipmentType}
-                        </span>
-                      </div>
+      </div>
+      <ScrollArea className="flex-1">
+        {sortedRequests.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground">
+            <Clock className="h-16 w-16 mx-auto mb-4 opacity-30" />
+            <p className="text-lg font-medium">No transport requests</p>
+            <p className="text-sm mt-1">Create a new request to get started</p>
+          </div>
+        ) : (
+          <div className="p-4 grid gap-3">
+            {sortedRequests.map((request) => (
+              <div
+                key={request.id}
+                className={cn(
+                  "rounded-xl border bg-white shadow-sm transition-shadow hover:shadow-md",
+                  selectedRequestId === request.id &&
+                    "ring-2 ring-slate-900/10",
+                )}
+                onClick={() => onRequestSelect(request)}
+              >
+                <div className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={cn(
+                        "h-10 w-10 rounded-full flex items-center justify-center text-white",
+                        getPriorityDot(request.priority),
+                      )}
+                    >
+                      <AlertCircle className="h-5 w-5" />
                     </div>
-
-                    {/* Patient Info */}
-                    <div className="mb-3">
-                      <div className="font-semibold text-sm">
-                        {request.patientInfo.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        ID: {request.patientInfo.id} • Room:{" "}
-                        {request.patientInfo.roomNumber}
-                        {request.patientInfo.age &&
-                          ` • Age: ${request.patientInfo.age}`}
-                      </div>
-                    </div>
-
-                    {/* Route */}
-                    <div className="flex items-center gap-2 text-xs mb-3 bg-gray-50 p-2 rounded">
-                      <div className="flex items-center gap-1 flex-1">
-                        <MapPin className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">
-                            {request.origin.zone}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-slate-900 truncate">
+                            {request.patientInfo.name}
                           </div>
-                          <div className="text-muted-foreground truncate">
-                            Floor {request.origin.floor} • {request.origin.room}
+                          <div className="text-xs text-muted-foreground">
+                            {request.patientInfo.id} • Room{" "}
+                            {request.patientInfo.roomNumber}
+                            {request.patientInfo.age &&
+                              ` • Age ${request.patientInfo.age}`}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-xs font-medium",
+                              getPriorityBadge(request.priority),
+                            )}
+                          >
+                            {request.priority}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-xs flex items-center gap-1",
+                              getStatusBadge(request.status),
+                            )}
+                          >
+                            {getStatusIcon(request.status)}
+                            {request.status}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                        <div className="flex items-center gap-2 rounded-md bg-slate-50 px-2 py-1">
+                          <MapPin className="h-3.5 w-3.5 text-blue-600" />
+                          <div className="truncate">
+                            {request.origin.zone} • Floor {request.origin.floor}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 rounded-md bg-slate-50 px-2 py-1">
+                          <MapPin className="h-3.5 w-3.5 text-green-600" />
+                          <div className="truncate">
+                            {request.destination.zone} • Floor{" "}
+                            {request.destination.floor}
                           </div>
                         </div>
                       </div>
-                      <ArrowRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                      <div className="flex items-center gap-1 flex-1">
-                        <MapPin className="h-3 w-3 text-green-500 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">
-                            {request.destination.zone}
-                          </div>
-                          <div className="text-muted-foreground truncate">
-                            Floor {request.destination.floor} •{" "}
-                            {request.destination.room}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Additional Info */}
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        <span>{request.requestedBy}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span>{request.requestedAt.toLocaleTimeString()}</span>
-                      </div>
-                    </div>
-
-                    {request.estimatedDuration && (
-                      <div className="mt-2 text-xs text-muted-foreground">
-                        Est. Duration: {request.estimatedDuration} min
-                      </div>
-                    )}
-
-                    {/* Notes */}
-                    {request.notes && (
-                      <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs">
-                        <div className="flex items-start gap-1">
-                          <AlertCircle className="h-3 w-3 text-amber-600 mt-0.5 flex-shrink-0" />
-                          <span className="text-amber-800">
-                            {request.notes}
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          <User className="h-3.5 w-3.5" />
+                          <span>{request.requestedBy}</span>
+                          <span className="text-slate-300">•</span>
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>
+                            {request.requestedAt.toLocaleTimeString()}
                           </span>
                         </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 rounded-full border px-2 py-0.5 bg-white">
+                            {request.equipmentType === "stretcher" ? (
+                              <Bed className="h-3.5 w-3.5" />
+                            ) : (
+                              <Accessibility className="h-3.5 w-3.5" />
+                            )}
+                            <span className="capitalize">
+                              {request.equipmentType}
+                            </span>
+                          </div>
+                          {request.estimatedDuration && (
+                            <div className="rounded-full border px-2 py-0.5 bg-white">
+                              ~{request.estimatedDuration} min
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
 
-                    {/* Actions */}
-                    {request.status === "pending" && (
-                      <div className="mt-3 flex gap-2">
-                        <Button
-                          size="sm"
-                          className="flex-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenAssignDialog?.(request);
-                          }}
-                        >
-                          <Play className="h-3 w-3 mr-1" />
-                          Assign
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCancelRequest?.(request.id);
-                          }}
-                        >
-                          <XCircle className="h-3 w-3 mr-1" />
-                          Cancel
-                        </Button>
-                      </div>
-                    )}
+                      {request.notes && (
+                        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                            <span>{request.notes}</span>
+                          </div>
+                        </div>
+                      )}
 
-                    {/* Assigned Info */}
-                    {request.assignedStaff && (
-                      <div className="mt-2 text-xs bg-blue-50 p-2 rounded border border-blue-200">
-                        <span className="text-blue-700">
-                          Assigned to Staff ID: {request.assignedStaff}
-                        </span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
-            )}
+                      {request.assignedStaff && (
+                        <div className="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-blue-600" />
+                            <span>
+                              Assigned to Staff ID: {request.assignedStaff}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {request.status === "pending" && (
+                        <div className="mt-4 flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onOpenAssignDialog?.(request);
+                            }}
+                          >
+                            <Play className="h-3.5 w-3.5 mr-1.5" />
+                            Assign
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCancelRequest?.(request.id);
+                            }}
+                          >
+                            <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                            Cancel
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        </ScrollArea>
-      </CardContent>
-    </Card>
+        )}
+      </ScrollArea>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { AppHeader } from "../components/AppHeader";
 import { FloorManagementDialog } from "../components/FloorManagementDialog";
+import { AddFloorDialog } from "../components/AddFloorDialog";
 import { AddAccessPointDialog } from "../components/AddAccessPointDialog";
 import { TransportMap } from "../components/TransportMap";
 import { ZoneStatistics } from "../components/ZoneStatistics";
@@ -27,7 +28,8 @@ export default function FloorManagementPage() {
     handleAddAccessPoint,
   } = useApp();
 
-  const [showFloorDialog, setShowFloorDialog] = useState(false);
+  const [showAddFloorDialog, setShowAddFloorDialog] = useState(false);
+  const [showEditFloorsDialog, setShowEditFloorsDialog] = useState(false);
   const [showAccessPointDialog, setShowAccessPointDialog] = useState(false);
 
   const enabledFloors = floorConfig
@@ -42,11 +44,10 @@ export default function FloorManagementPage() {
   const zonesCount = currentFloor?.zones?.length || 0;
 
   return (
-    
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50">
       <AppHeader />
 
-      <div className="flex-1 flex flex-col overflow-hidden p-6">
+      <div className="flex-1 flex flex-col overflow-hidden p-6 animate-fadeInUpSlow">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold mb-2">
@@ -56,54 +57,68 @@ export default function FloorManagementPage() {
               Configure floors, zones, and access points
             </p>
           </div>
-          <Button onClick={() => setShowFloorDialog(true)}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Floor Configuration
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowAddFloorDialog(true)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Floor
+            </Button>
+            <Button
+              onClick={() => setShowEditFloorsDialog(true)}
+              variant="outline"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Floors
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+        <div className="grid grid-cols-4 gap-3 mb-5">
+          <Card className="bg-slate-50">
+            <CardHeader className="pb-1">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
                 Total Floors
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{enabledFloors.length}</div>
+            <CardContent className="pb-3">
+              <div className="text-2xl font-bold text-slate-700">
+                {enabledFloors.length}
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+          <Card className="bg-blue-50">
+            <CardHeader className="pb-1">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
                 Total Access Points
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{totalAPs}</div>
+            <CardContent className="pb-3">
+              <div className="text-2xl font-bold text-blue-600">{totalAPs}</div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+          <Card className="bg-purple-50">
+            <CardHeader className="pb-1">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
                 Current Floor Zones
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-purple-600">
+            <CardContent className="pb-3">
+              <div className="text-2xl font-bold text-purple-600">
                 {zonesCount}
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+          <Card className="bg-green-50">
+            <CardHeader className="pb-1">
+              <CardTitle className="text-xs font-medium text-muted-foreground">
                 Current Floor APs
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">
+            <CardContent className="pb-3">
+              <div className="text-2xl font-bold text-green-600">
                 {floorsAPs.length}
               </div>
             </CardContent>
@@ -172,7 +187,7 @@ export default function FloorManagementPage() {
                     {currentFloor.name}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-1">
                   <div>
                     <div className="text-xs text-muted-foreground mb-1">
                       Floor Number
@@ -183,7 +198,10 @@ export default function FloorManagementPage() {
                     <div className="text-xs text-muted-foreground mb-1">
                       Dimensions
                     </div>
-                    <div className="text-sm">100 x 100 units</div>
+                    <div className="text-sm">
+                      {currentFloor.dimensions.width} x{" "}
+                      {currentFloor.dimensions.height} px
+                    </div>
                   </div>
                   <div>
                     <div className="text-xs text-muted-foreground mb-2">
@@ -212,12 +230,12 @@ export default function FloorManagementPage() {
             )}
 
             {/* Zone Statistics */}
-            <ZoneStatistics
+            {/* <ZoneStatistics
               equipment={equipment}
               staff={staff}
               selectedFloor={selectedFloor}
               floorConfig={floorConfig}
-            />
+            /> */}
 
             {/* Access Points on Floor */}
             <Card>
@@ -228,7 +246,7 @@ export default function FloorManagementPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2 max-h-48 overflow-auto">
+                <div className="space-y-2 h-[88px] overflow-y-auto">
                   {floorsAPs.map((ap) => (
                     <div
                       key={ap.id}
@@ -260,13 +278,23 @@ export default function FloorManagementPage() {
       </div>
 
       <FloorManagementDialog
-        open={showFloorDialog}
-        onClose={() => setShowFloorDialog(false)}
+        open={showEditFloorsDialog}
+        onClose={() => setShowEditFloorsDialog(false)}
         floors={floorConfig}
         onUpdateFloors={(newConfig) => {
           handleFloorConfigUpdate(newConfig);
-          setShowFloorDialog(false);
         }}
+      />
+
+      <AddFloorDialog
+        open={showAddFloorDialog}
+        onClose={() => setShowAddFloorDialog(false)}
+        onAddFloor={(newFloor) => {
+          const updatedConfig = [...floorConfig, newFloor];
+          handleFloorConfigUpdate(updatedConfig);
+          setShowAddFloorDialog(false);
+        }}
+        existingFloors={floorConfig}
       />
 
       <AddAccessPointDialog
