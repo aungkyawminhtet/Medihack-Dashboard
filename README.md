@@ -10,5 +10,5 @@
   Run `npm run dev` to start the development server.
 
 ### Live View
-[Demo](https://www.google.com)
+[Demo](https://medihack-dashboard.vercel.app/)
   
